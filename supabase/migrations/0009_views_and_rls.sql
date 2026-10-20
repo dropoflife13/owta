@@ -367,3 +367,4 @@ $$;
 -- Grant execute permissions for public RPCs
 GRANT EXECUTE ON FUNCTION public.submit_report TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_ticket_status TO anon, authenticated;
+

@@ -141,3 +141,4 @@ CREATE POLICY "Admins can view sms logs"
     ON public.sms_delivery_logs FOR SELECT
     TO authenticated
     USING (public.app_role() = 'admin');
+

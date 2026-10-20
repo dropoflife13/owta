@@ -157,3 +157,4 @@ CREATE POLICY "Utility operators and admins can manage advisories"
     TO authenticated
     USING (public.app_role() IN ('utility_operator', 'admin'))
     WITH CHECK (public.app_role() IN ('utility_operator', 'admin'));
+

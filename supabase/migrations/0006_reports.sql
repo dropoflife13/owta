@@ -165,3 +165,4 @@ CREATE POLICY "Authorized staff can update water_reports"
             AND barangay_id = public.app_barangay()
         )
     );
+

@@ -195,3 +195,4 @@ CREATE POLICY "Admins can write delivery indices"
     TO authenticated
     USING (public.app_role() = 'admin')
     WITH CHECK (public.app_role() = 'admin');
+

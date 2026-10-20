@@ -142,3 +142,4 @@ CREATE POLICY "System can append audit_logs"
     ON public.audit_logs FOR INSERT
     TO authenticated, anon
     WITH CHECK (true);
+
