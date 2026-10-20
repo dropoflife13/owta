@@ -115,3 +115,4 @@ CREATE POLICY "Public read on barangay_dma"
     ON public.barangay_dma FOR SELECT
     TO anon, authenticated
     USING (true);
+

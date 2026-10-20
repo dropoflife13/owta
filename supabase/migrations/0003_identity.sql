@@ -312,3 +312,4 @@ CREATE POLICY "Admins can update any profile"
     TO authenticated
     USING (public.app_role() = 'admin')
     WITH CHECK (public.app_role() = 'admin');
+

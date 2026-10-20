@@ -18,3 +18,4 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- Enable uuid-ossp for RFC 4122 UUID generation
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
