@@ -27,8 +27,8 @@ Proves role-based access control (RLS) and barangay data isolation on the server
 3. Open the public ticket tracking URL (`/report/[code]`) in an incognito window and verify the public badge now displays `Verified`.
 
 ## Done looks like
-- [ ] Login screen authenticates staff accounts and sets secure session cookies.
-- [ ] Barangay official is strictly scoped to their assigned barangay via RLS.
-- [ ] Triage status updates (`verified`, `rejected`) persist and write to `audit_logs` (`WR08`).
-- [ ] Public reference code status updates accordingly.
+- [x] Login screen authenticates staff accounts and sets secure session cookies.
+- [x] Barangay official is strictly scoped to their assigned barangay via RLS.
+- [x] Triage status updates (`verified`, `rejected`) persist and write to `audit_logs` (`WR08`).
+- [x] Public reference code status updates accordingly.
 

@@ -420,3 +420,4 @@ export function CitizenReportForm({ barangays }: CitizenReportFormProps) {
     </div>
   )
 }
+
