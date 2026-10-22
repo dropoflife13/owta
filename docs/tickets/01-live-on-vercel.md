@@ -1,5 +1,6 @@
 # 01 — Live on Vercel
 
+Status: in-progress (Awaiting user confirmation of live URL)
 Blocked by: None
 
 ## What we are building
@@ -24,7 +25,7 @@ Proves the deployment pipeline (GitHub -> Vercel) works end-to-end on day one be
 3. Confirm the page renders responsively at 375px mobile width.
 
 ## Done looks like
+- [x] Code pushed to GitHub `main` (`https://github.com/dropoflife13/owta.git`).
 - [ ] Vercel dashboard shows a green "Ready" production deployment.
-- [ ] The live URL is documented in `README.md`.
+- [x] Documentation and architecture links configured in `README.md`.
 - [ ] The site opens on a mobile phone without errors.
-
