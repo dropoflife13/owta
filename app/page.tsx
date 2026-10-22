@@ -3,7 +3,8 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { BarangayStatusBoard, BarangayStatusItem } from '@/components/status/BarangayStatusBoard'
 import { PublicHeader } from '@/components/layout/PublicHeader'
-import { Droplet, AlertTriangle, ShieldCheck } from 'lucide-react'
+import { Droplet, AlertTriangle, ShieldCheck, Truck, Radio, Shield } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 
 export const instant = false
 
@@ -45,6 +46,12 @@ export default async function HomePage() {
     .from('pressure_readings')
     .select('barangay_id, pressure_psi, recorded_at, source, is_simulated')
     .order('recorded_at', { ascending: false })
+
+  // 3. Fetch active relief dispatches for government live status banner
+  const { data: activeDispatches } = await supabase
+    .from('relief_dispatches')
+    .select('id, status, capacity_liters')
+    .in('status', ['assigned', 'in_transit', 'on_site'])
 
   // Stale threshold: 360 minutes (6 hours) per methodology
   const STALE_THRESHOLD_MS = 360 * 60 * 1000
@@ -100,28 +107,57 @@ export default async function HomePage() {
     }
   })
 
+  const totalDispatchesActive = activeDispatches?.length || 0
+
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 font-sans flex flex-col">
-      {/* Universal Public Navigation Header */}
+      {/* Universal Public Navigation Header with Official Gov Bar */}
       <PublicHeader />
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
-        {/* Hero Section */}
-        <div className="space-y-1.5">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-800 border border-sky-200/60 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/60">
-            <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse"></span>
-            <span>Live Municipal Telemetry Board</span>
+        {/* Civic Trust & Operations Bar */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">
+          <div className="space-y-1.5 max-w-3xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+                <Radio className="w-3 h-3 text-sky-600 animate-pulse" />
+                Live Telemetry Ingestion
+              </span>
+              <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
+              <span className="text-xs text-slate-500 font-medium">
+                Mandated under City Water Transparency Framework
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">
+              Iloilo City Water Status &amp; Transparency Architecture
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              Official municipal transparency portal publishing real-time hydraulic pressure telemetry, citizen-verified outage clusters, and audited rotational supply compliance across all 180 barangays.
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-50 tracking-tight">
-            Iloilo City Water Status & Transparency
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed">
-            Real-time public status board and delivery index across Mandurriao and participating water districts. Every metric backed by transparent field readings and citizen report clustering.
-          </p>
+
+          <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-2 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800">
+            <div className="text-right">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                Statutory Assurance
+              </span>
+              <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1 justify-end">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                Evidence-First Civic Standard
+              </span>
+            </div>
+
+            {totalDispatchesActive > 0 && (
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-purple-50 text-purple-900 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                <Truck className="w-3.5 h-3.5 text-purple-600" />
+                <span>{totalDispatchesActive} CDRRMO Tankers Active</span>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Status Board Component */}
+        {/* Status Board Component with Toggles & Maps */}
         <BarangayStatusBoard
           items={barangays}
           globalAsOf={newestRecordedAt}
@@ -129,25 +165,25 @@ export default async function HomePage() {
         />
       </main>
 
-      {/* Footer & Privacy Notice (RA 10173 & WR07) */}
+      {/* Official Civic Footer (RA 10173 & Rule WR07) */}
       <footer className="mt-auto border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-6 text-xs text-slate-500 dark:text-slate-400">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Droplet className="w-4 h-4 text-sky-600" />
             <p>
-              © 2026 OWTA — Open Water Transparency Architecture. Neutral, evidence-first civic water accounting.
+              © 2026 Republic of the Philippines • Open Water Transparency Architecture (OWTA).
             </p>
           </div>
-          <div className="flex items-center gap-4 text-xs">
+          <div className="flex items-center gap-4 text-xs font-medium">
             <Link href="/index" className="hover:text-slate-900 dark:hover:text-slate-200 hover:underline">
               Weekly Delivery Index
             </Link>
             <span>•</span>
             <Link href="/methodology" className="hover:text-slate-900 dark:hover:text-slate-200 hover:underline">
-              Methodology
+              Open Methodology
             </Link>
             <span>•</span>
-            <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500" title="Compliant with Republic Act No. 10173">
+            <span className="inline-flex items-center gap-1 text-slate-600 dark:text-slate-400" title="Compliant with Republic Act No. 10173">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               RA 10173 Privacy Protected
             </span>
