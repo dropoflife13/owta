@@ -1,228 +1,163 @@
-# OWTA: Iloilo Water Transparency Tracker
-## Master System Blueprint & Architectural Specification
+# OWTA: Project Context
 
-**Document Version:** 1.0.0  
-**Classification:** Technical / Audit-Ready  
-**Jurisdiction:** Iloilo City, Republic of the Philippines  
-**Target Compliance:** ISO/IEC 25010, ISO/IEC 27001, RA 10173 (Data Privacy Act of 2012)
+Open Water Transparency Architecture for Iloilo City. Read this before every task.
 
----
+## Purpose
 
-## 1. Executive Summary
+Water in Iloilo City is delivered in rotating windows. Residents often do not know the exact window, whether water actually arrived, or when a repair will end. Advisories are scattered, and barangays, City Hall, CDRRMO, and the utility do not share one picture.
 
-The **Iloilo Water Transparency Tracker (OWTA)** is a mission-critical civic infrastructure and operational transparency platform engineered for Iloilo City. Within the service coverage of Metro Pacific Iloilo Water (MPIW) and the Metro Iloilo Water District (MIWD), municipal potable water is distributed via rotational hydraulic schedules across District Metered Areas (DMAs). Due to seasonal supply deficits, infrastructure bottlenecks, and pipeline leaks, water distribution frequently diverges from scheduled windows.
+OWTA is a mobile-first public web app plus a role-based back office. It publishes supply windows, shows current status with a visible as-of time, accepts and de-duplicates citizen reports, ranks barangays for relief, and computes a delivery index under a published methodology. SMS alerts follow in Phase 2.
 
-Historically, this divergence has led to severe civic friction:
-* Rotational schedules are published as static, unsearchable social media images with little to no real-time adjustment.
-* Citizen complaints are fragmented across social media comments, barangay halls, and customer service hotlines without systematic aggregation.
-* Local Government Unit (LGU) emergency water rationing tankers (dispatched via the City Disaster Risk Reduction and Management Office - CDRRMO) are deployed reactively to the "loudest voices" rather than verified dry zones.
-* There is no independent, immutable, and auditable record of promised supply versus delivered water.
+Stance: neutral and evidence-first. The tool closes information gaps; it does not accuse anyone. UI copy and docs stay neutral toward the utility, the LGU, and barangays.
 
-OWTA resolves this systemic asymmetry by providing:
-1. **Real-Time Operational Visibility:** Machine-readable, geospatial mapping of DMA rotational schedules with full superseding history.
-2. **Crowdsourced & Verified Pressure Telemetry:** Public incident reporting with anti-sybil protection, spatiotemporal clustering, and barangay-level triage.
-3. **Data-Driven LGU Relief Prioritization:** Automated algorithmic queuing of emergency tanker dispatches based on verified consecutive dry hours.
-4. **The Iloilo Water Delivery Index:** A standardized, weekly mathematical benchmark measuring percentage delivery of scheduled water above distribution pressure thresholds, published under an open, verifiable methodology.
+## Principles
 
----
+- Derive, do not store. Status and indexes are computed from readings and schedules.
+- The server is the authority. UI visibility is never authorization; RLS decides.
+- Public reads are cheap and cacheable. Traffic spikes during outages and typhoons.
+- Every number carries its source and as-of time.
+- Degrade gracefully: last known data first, then a static page and SMS.
 
-## 2. High-Level Architecture Diagram
+## Roles
 
-The OWTA platform implements a zero-trust, multi-tiered architecture separating public read-heavy caching from secure, role-gated administrative workflows.
+| Role | Who | Scope |
+|---|---|---|
+| public (anon) | Any visitor | Read-only; may submit a report through the protected endpoint |
+| resident | Registered resident | Optional account; own reports and subscriptions |
+| barangay_official | Punong Barangay, secretary, SK, staff | One barangay only |
+| lgu_dispatcher | City Hall, CDRRMO | City-wide; relief priority and tankers |
+| utility_operator | Utility data steward or delegate | Schedules and readings; no personal data |
+| admin | Project team | Verifies users, assigns roles, manages methodology and moderation |
+| auditor | Researchers, council staff, media | Read-only aggregates; no personal data |
 
-```mermaid
-flowchart TD
-    subgraph Client Tier
-        PWA["Public Web Client / PWA\n(Citizen Discovery, Reporting, Maps)"]
-        PORTAL["Authorized Staff Portals\n(Barangay, LGU Dispatcher, Utility Desk, Admin)"]
-    end
+Rules:
+- Roles come only from `profiles.role`. The browser never supplies a role, and users cannot edit their own.
+- Staff accounts are inactive until an admin sets `verified_at`. Unverified staff behave as residents.
+- `barangay_official` scope is enforced by RLS through `profiles.barangay_id`.
 
-    subgraph Edge Tier
-        CF["Cloudflare CDN & Edge\n(DDoS Mitigation, SSL/TLS, Caching)"]
-        TURN["Cloudflare Turnstile\n(Bot / Sybil Challenge)"]
-        EDGE_MW["Next.js Edge Middleware\n(Session Refresh, Route Guards, Rate Limit)"]
-    end
+Capabilities:
+- Everyone views status, published schedules, and active advisories.
+- Everyone except utility_operator and auditor submits reports. Residents also view their own reports.
+- Triage and exact report locations: barangay_official (own barangay), lgu_dispatcher and admin (all).
+- Publish schedules and enter readings: utility_operator and admin.
+- Publish advisories: barangay_official (own barangay); lgu_dispatcher, utility_operator, admin (any).
+- Request a tanker: barangay_official. Dispatch: lgu_dispatcher and admin.
+- Manage methodology and verify users: admin. View audit log: admin and auditor.
+- Export aggregate data: barangay_official (own barangay), lgu_dispatcher, utility_operator, admin, auditor.
 
-    subgraph Application Tier
-        RSC["Next.js Server Components (RSC)\n(Optimized Read Cache, Public Hydration)"]
-        ACT["Next.js Server Actions\n(Validated Mutations, RBAC Checks)"]
-        API["Next.js Route Handlers (/api/*)\n(SMS Webhooks, Cron Workers, Health)"]
-        ZOD["Zod Validation Layer\n(Boundary & Schema Verification)"]
-    end
+## Scope
 
-    subgraph Security & Integration Tier
-        PEPPER["Device Pepper Hash Engine\n(SHA-256 Client Fingerprinting)"]
-        SMS_GW["PhilSMS / Semaphore Gateway\n(Transactional SMS & Alerts)"]
-        CRON["Automated Cron / Maintenance\n(Index Calculation, PII Purge)"]
-    end
+MVP job: a resident finds when water is coming to their barangay and reports when it does not. A barangay or LGU user triages the report and sees where relief is needed.
 
-    subgraph Data Tier (Supabase / PostgreSQL 15+)
-        RLS["Row-Level Security (RLS) Engine\n(app_role() Security Definer Gating)"]
-        POSTGIS["PostGIS Spatial Engine\n(DMA Polygons, Barangay Geometries, Clustering)"]
-        VIEWS["Materialized & Public Views\n(v_public_barangay_status, v_public_water_index)"]
-        AUDIT["Append-Only Audit Log\n(Immutable Triggers, Non-Destructive State)"]
-    end
+| Phase | Contents |
+|---|---|
+| 1 MVP | Public portal, schedules via operator entry, manual readings, reports with dedup, relief priority, methodology and weekly index, admin verification, audit trail |
+| 2 Next | SMS subscriptions and outbox, dispatch workflow, realtime staff dashboard, Filipino and Hiligaynon, report tracking codes, CSV schedule import, right-of-reply notes, photo upload, PWA caching, exports, audit viewer, moderation |
+| 3 Later | Sensor ingestion, tanker GPS, Viber and Telegram bots, public API, connection applications and pipe GIS. Not authorized. |
 
-    PWA --> CF
-    PORTAL --> CF
-    CF --> TURN
-    TURN --> EDGE_MW
-    EDGE_MW --> RSC
-    EDGE_MW --> ACT
-    EDGE_MW --> API
+Three-minute demo flow (MVP gate):
+1. Resident opens the site, picks a barangay, sees status, today's window, and the as-of time.
+2. Resident submits a dry-tap report with a landmark.
+3. A second resident reports the same problem; the group count becomes 2.
+4. Barangay official signs in, sees the grouped report, marks it verified.
+5. Dispatcher opens the relief priority list.
+6. Operator publishes a revised schedule; the public page updates.
+7. The weekly page shows promised versus delivered with a methodology link.
 
-    ACT --> ZOD
-    API --> ZOD
-    ZOD --> PEPPER
-    API --> SMS_GW
-    CRON --> API
+## Business rules
 
-    ZOD --> RLS
-    RSC --> VIEWS
-    RLS --> POSTGIS
-    RLS --> AUDIT
-    VIEWS --> POSTGIS
+| ID | Rule |
+|---|---|
+| WR01 | Published windows for one DMA never overlap. Changes supersede the old row; nothing is overwritten. |
+| WR02 | Status derives from the latest reading per monitoring point. A reading older than the stale threshold gives `unknown`, never `flowing`. |
+| WR03 | Every public figure shows source and as-of time. Data older than the threshold triggers a banner. |
+| WR04 | The delivery index uses only published schedules and recorded readings under a versioned methodology. Recomputing never edits history. |
+| WR05 | Reports of the same type and barangay within a radius and time window join one group. Members are kept; the group count is public. |
+| WR06 | A barangay enters relief priority when dry hours reach the threshold and status is `dry`. `unknown` never triggers relief. |
+| WR07 | The public never sees personal data or exact report coordinates. |
+| WR08 | Every staff state change writes an audit record with actor, role, before, and after. |
+| WR09 | Phone numbers are stored only with recorded consent. STOP is honored immediately. Contact data is purged after the retention period. |
+| WR10 | The utility or LGU may attach a dated note to any index period. Notes never edit numbers. |
+| WR11 | Dispatch states move only requested, then dispatched, then delivered or cancelled. |
+| WR12 | Readings and schedules carry a source type. Simulated data is flagged and excluded from the public index unless the demo flag is set. |
+
+## Security and privacy
+
+- RA 10173 applies: consent recorded, purpose limited, retention enforced, named privacy contact.
+- RLS enabled with explicit policies on every table. Tables with no policy are unreadable.
+- Anonymous writes: CAPTCHA, rate limits, and Zod validation.
+- Residents never insert into `citizen_reports` directly; they call `submit_report()` through a server route.
+- The audit log is append-only for every role. Do not attach the generic audit trigger to tables holding personal data.
+- Photos (Phase 2): private bucket, signed URLs, EXIF stripped.
+- Strict security headers including CSP.
+
+## Data sources and trust labels
+
+| Phase | Source | Value |
+|---|---|---|
+| 1 | Public utility advisories, transcribed by staff with a source link | schedule `operator_entry` |
+| 1 | Pressure readings entered by operators or agreed volunteers; simulated readings for demos only | reading `manual`, `simulated` |
+| 1 | Citizen reports | `citizen` |
+| 2 | Utility or LGU CSV or API under an agreement | schedule `utility_advisory` |
+| 3 | Authenticated pressure sensors at DMA valves | reading `sensor` |
+
+Simulated data is visibly flagged everywhere it appears. Seed data is fictional and labeled sample.
+
+## Configurable defaults [A]
+
+Values marked [A] are assumptions to confirm with the team and pilot barangays. Keep them configurable. Never present them as fact.
+
+| Setting | Default |
+|---|---|
+| Stale threshold | 360 min |
+| Minimum PSI for flowing | 5 |
+| Relief dry hours | 48 |
+| Minimum coverage | 0.70 |
+| Report grouping | 300 m, 6 h |
+| Contact retention | N days (to be assigned) |
+
+Unverified, never stated as fact: number of DMAs, number of barangays, boundary source and license, utility telemetry, typical window times, SMS rates, RA 10173 registration duties. A barangay may be served by more than one DMA [A].
+
+## Stack and conventions
+
+- Next.js App Router, React, TypeScript strict. Match installed versions (Next.js 15, React 19).
+- Tailwind CSS and shadcn/ui with central design tokens. Recharts takes server-provided data only.
+- Map: MapLibre GL with a tile provider whose terms allow production use. City GeoJSON is a simplified static asset on the CDN (under 300 KB gzip [A]).
+- Zod at every boundary. `@supabase/supabase-js` and `@supabase/ssr`; types from `supabase gen types`.
+- Server Components by default; Client Components only for the map and forms. Shared UI components take props and never fetch data.
+- Server Actions for staff mutations. Route Handlers for public JSON, webhooks, health, cron, and device ingestion. A shared service layer in `lib/` keeps both consistent.
+- Public pages use ISR with on-demand revalidation on publish plus a short time-based fallback. Staff pages are server-rendered behind auth. Middleware role guards are a UX convenience; RLS is the authority.
+- Realtime only for staff dashboards (Phase 2). A static last-known snapshot is the fallback if the database is unreachable.
+- Jobs: pg_cron or Vercel Cron (confirm plan limits): weekly index, nightly retention purge, outbox drain.
+- Errors return `{ error, errorId, details }`. Status codes: 400 validation, 401 not signed in, 403 role or scope, 404 not found, 409 conflict, 429 rate limit with `Retry-After`, 500 unexpected.
+- Accessibility: WCAG 2.1 AA, status never by color alone, 44 px touch targets, responsive from 375 px. Plain language; a barangay status is reachable within 3 taps from landing.
+- UI strings externalized in `i18n/`. English at MVP; Filipino and Hiligaynon in Phase 2.
+- Performance: LCP under 2.5 s at p75 on a mid-range Android over 4G; initial JS under 200 KB gzip [A].
+- Testing: Vitest, Playwright, axe. pgTAP optional for SQL.
+- Environment variable names: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (browser); `SUPABASE_SERVICE_ROLE_KEY` (server only, background jobs only); `CAPTCHA_SECRET`, `NEXT_PUBLIC_CAPTCHA_SITE_KEY`; `CRON_SECRET`; Phase 2: `SMS_API_KEY`, `SMS_WEBHOOK_SECRET`; Phase 3: `DEVICE_KEY_PEPPER`.
+
+## Repo layout
+
 ```
-
----
-
-## 3. Technology Stack & Runtime Specifications
-
-| Layer | Technology | Version | Purpose & Architectural Justification |
-| :--- | :--- | :--- | :--- |
-| **Framework** | Next.js (App Router) | `16.4.2` | React Server Components (RSC), Turbopack compilation, edge middleware, streaming SSR. |
-| **UI Library** | React | `19.3.0` | Concurrent rendering, Server Actions, deterministic component tree. |
-| **Type System** | TypeScript (Strict) | `^5.0` | 100% strict type safety across database schemas, APIs, and client views. |
-| **Styling** | Tailwind CSS | `^4.0` | High-performance styling, design token consistency, mobile-first responsive utilities. |
-| **Component Kit** | shadcn/ui & Radix UI | Latest | Accessible, headless UI primitives compliant with WCAG 2.1 AA. |
-| **Database & Auth** | Supabase / PostgreSQL | `15+` | Managed relational data store, PostGIS 3.3+, Row-Level Security, Auth JWT, `pg_cron`. |
-| **Spatial Engine** | PostGIS | `3.3+` | Geometry storage (EPSG:4326), spatial indexing (`GIST`), `ST_DWithin` spatiotemporal grouping. |
-| **Mapping Engine** | MapLibre GL JS | `^6.15.0` | Vector tile rendering, interactive GeoJSON polygon and marker overlays without proprietary lock-in. |
-| **Data Viz** | Recharts | `^3.10.1` | Declarative SVG charting for pressure timelines and Promised vs. Delivered historical ratios. |
-| **Schema Validation**| Zod | `^4.6.7` | Runtime type validation at all API routes and Server Action ingress points. |
-| **Anti-Bot / Captcha**| Cloudflare Turnstile | v1 | Privacy-preserving bot challenge preventing report flooding. |
-
----
-
-## 4. Complete Database Blueprint
-
-The database layer is partitioned across 9 sequential, declarative migration modules. Each module enforces strict referential integrity, foreign key constraints, and spatial indexes.
-
+owta/
+  AGENTS.md
+  package.json, tsconfig.json, next.config.ts, components.json, middleware.ts
+  .env.example            variable names only
+  docs/                   CONTEXT.md, DATA_MODEL.md, METHODOLOGY.md, SPEC.md, LATER.md, PRIVACY.md, RUNBOOK.md, tickets/
+  supabase/
+    migrations/           numbered SQL, 0001_extensions.sql onward
+    seed.sql              fictional, labeled sample data
+    tests/                RLS and view tests
+  public/geo/             simplified barangay and DMA GeoJSON
+  src/
+    app/
+      (public)/           landing, b/[barangayId], map, report, methodology, advisories
+      (auth)/login/
+      staff/              reports, relief, schedules, readings, advisories, index, admin/{users,methodology,audit}
+      api/                public, reports, readings, subscriptions, webhooks/sms, cron, health
+    components/           ui/ (shadcn), map/, charts/, status/, forms/
+    lib/                  supabase/{client,server,middleware,types}.ts, permissions.ts, validators.ts,
+                          rateLimit.ts, captcha.ts, logger.ts, sms/, geo.ts, time.ts, index-method.ts
+    i18n/                 en.json, fil.json, hil.json
+    tests/                unit/, e2e/
 ```
-supabase/
-├── config.toml
-├── seed.sql
-├── migrations/
-│   ├── 0001_extensions.sql
-│   ├── 0002_geography.sql
-│   ├── 0003_identity.sql
-│   ├── 0004_monitoring_supply.sql
-│   ├── 0005_methodology_index.sql
-│   ├── 0006_reports.sql
-│   ├── 0007_relief_alerts.sql
-│   ├── 0008_governance_audit.sql
-│   └── 0009_views_and_rls.sql
-└── tests/
-    └── rls_and_views.sql
-```
-
-### 4.1 Migration Breakdown
-
-#### `0001_extensions.sql`
-Enables core database extensions:
-* `uuid-ossp`: Generation of RFC 4122 compliant UUIDs.
-* `postgis`: Geospatial objects, spherical distance calculation, spatial indexes.
-* `pgcrypto`: Cryptographic hashing for device keys, tokens, and audit verification.
-* `pg_stat_statements`: Query execution monitoring and performance auditing.
-
-#### `0002_geography.sql`
-Stores physical spatial boundaries and structural mapping:
-* `dmas`: District Metered Areas across Iloilo City (code, name, description, boundary `geometry(MultiPolygon, 4326)`).
-* `barangays`: Official 180 barangays of Iloilo City (code, name, district, centroid `geometry(Point, 4326)`, boundary `geometry(MultiPolygon, 4326)`).
-* `dma_barangay_mapping`: Many-to-many association mapping barangays to hydraulic DMAs with overlap percentages.
-
-#### `0003_identity.sql`
-Defines role-based access control and user identity:
-* `app_role` (ENUM): `'anon'`, `'resident'`, `'barangay_official'`, `'lgu_dispatcher'`, `'utility_operator'`, `'admin'`, `'auditor'`.
-* `user_profiles`: Extends `auth.users` with `role`, `first_name`, `last_name`, `mobile_number`, `assigned_barangay_id`, `is_active`, and audit timestamps.
-* `app_role()`: `SECURITY DEFINER` function extracting the authenticated user's active role from `user_profiles` bypassing client-side JWT tampering.
-
-#### `0004_monitoring_supply.sql`
-Records planned and verified water supply parameters:
-* `water_schedules`: Published rotational schedules (dma_id, window_start, window_end, published_by, published_at, superseded_at, superseded_by_id, notes).
-* `pressure_readings`: Hydraulic telemetry and field gauge measurements (dma_id, barangay_id, pressure_psi, reading_source, is_simulated, recorded_at, logged_by).
-* `supply_advisories`: Emergency and planned interruption notices (title, severity, affected_dmas, affected_barangays, valid_from, valid_to, is_active).
-
-#### `0005_methodology_index.sql`
-Persists the quantitative weekly benchmarking outputs:
-* `methodology_parameters`: Versioned operational parameters (e.g., minimum pressure threshold = 7.0 PSI, minimum data coverage floor = 0.70, active version flag).
-* `weekly_delivery_indices`: Stores calculated indices per DMA and Barangay for each evaluation window (evaluation_start, evaluation_end, promised_hours, delivered_hours, coverage_ratio, delivery_index_score, status_tier, calculated_at).
-
-#### `0006_reports.sql`
-Crowdsourced citizen grievance and telemetry ingestion:
-* `report_clusters`: Spatiotemporally aggregated report groups (cluster_center `geometry(Point, 4326)`, barangay_id, category, first_reported_at, last_reported_at, report_count, status).
-* `water_reports`: Individual incident records (ticket_token, cluster_id, barangay_id, category `['dry_tap', 'low_pressure', 'dirty_water', 'pipe_burst']`, description, landmark, device_hash, contact_number_encrypted, consent_at, status `['submitted', 'verified', 'triaged', 'dispatched', 'resolved', 'rejected']`, verified_by, verified_at).
-
-#### `0007_relief_alerts.sql`
-Emergency water distribution and citizen notification tracking:
-* `relief_requests`: Barangay-level or cluster-level emergency water assistance requests.
-* `relief_dispatches`: Tanker rationing lifecycle records (dispatch_id, request_id, tanker_plate_number, driver_name, capacity_liters, dispatched_at, arrived_at, completed_at, status `['queued', 'in_transit', 'on_site', 'completed', 'cancelled']`, recipient_acknowledgment).
-* `sms_subscriptions`: Citizen opt-in notification subscriptions (mobile_encrypted, barangay_id, is_verified, subscribed_at, unsubscribed_at).
-
-#### `0008_governance_audit.sql`
-Immutable compliance and security record:
-* `audit_logs`: Append-only system audit log (log_id, actor_id, actor_role, action, target_table, record_id, previous_state, new_state, ip_hash, user_agent, created_at).
-* Enforces row-level database triggers blocking any `UPDATE` or `DELETE` commands on `audit_logs`.
-
-#### `0009_views_and_rls.sql`
-Public data projections and security policies:
-* Materialized / Security-Barrier Views:
-  * `v_public_barangay_status`: Real-time aggregated supply state, active advisories, open cluster counts (zero PII, zero exact coordinates).
-  * `v_public_water_index`: Publicly accessible historical weekly delivery index ratings.
-  * `v_active_advisories`: Unrestricted live list of currently active emergency announcements.
-* Comprehensive RLS policy matrix enforcing multi-tenant isolation.
-
----
-
-## 5. Multi-Tier RBAC Architecture
-
-OWTA enforces a 7-tier Role-Based Access Control (RBAC) hierarchy. All access control decisions are enforced at the database kernel via PostgreSQL Row-Level Security (RLS) driven by the trusted function `auth.app_role()`.
-
-| Role Identifier | Description & Persona | Permissions & Scope Boundaries |
-| :--- | :--- | :--- |
-| **`anon`** | Unauthenticated public citizen or visitor. | **Read-Only:** Public views (`v_public_*`), GeoJSON polygons, active advisories, published schedules.<br>**Write:** Can submit water reports via `/report` guarded by Turnstile CAPTCHA and rate limits. Zero access to raw tables or PII. |
-| **`resident`** | Authenticated citizen (via OTP/Magic Link). | Inherits all `anon` privileges.<br>**Read:** View history and progress of own submitted tickets.<br>**Write:** Manage own SMS notification subscriptions and contact preferences. |
-| **`barangay_official`** | Barangay Chairman, Kagawad, or designated Water Focal Person. | **RLS Boundary:** Strictly restricted to records where `barangay_id = user_profiles.assigned_barangay_id`.<br>**Read:** View full details of reports and clusters within their barangay.<br>**Write:** Triage, verify, reject, or escalate reports; endorse emergency relief requests to LGU. |
-| **`lgu_dispatcher`** | CDRRMO, City Mayor's Office, or City Engineering Logistics. | **Cross-Barangay Operational Scope:**<br>**Read:** Citywide relief queues, active clusters, verified dry tap reports, fleet availability.<br>**Write:** Prioritize relief queues (48h dry zones), create tanker dispatches, update dispatch lifecycle, record delivery fulfillment. |
-| **`utility_operator`** | Authorized Metro Pacific Iloilo Water (MPIW) operational staff. | **Hydraulic Operational Scope:**<br>**Read:** Historical and current telemetry, DMA schedule adherence.<br>**Write:** Publish and supersede rotational schedules (`water_schedules`), log pressure readings (`pressure_readings`), broadcast emergency advisories. |
-| **`admin`** | Designated City Information Technology / System Administrator. | **System Administration:**<br>**Read/Write:** User provisioning, role assignment, system parameter tuning, maintenance tasks. Explicitly blocked from modifying immutable audit rows. |
-| **`auditor`** | Independent third-party oversight (CSOs, Academe, COA, City Council). | **Independent Oversight Scope:**<br>**Read-Only:** Full unredacted access to `audit_logs`, methodology calculations, raw pressure readings, and dispatch timelines. Zero write permissions. |
-
----
-
-## 6. Regulatory & Industry Compliance Matrices
-
-### 6.1 ISO/IEC 25010 Software Quality Compliance
-
-| Quality Characteristic | OWTA Architectural Implementation | Verification Metric |
-| :--- | :--- | :--- |
-| **Functional Suitability** | 100% test coverage over 12 Business Integrity Rules (`WR01`–`WR12`) and functional catalogs. | Continuous integration test suite (`tests/rls_and_views.sql`). |
-| **Performance Efficiency** | Server Components with edge caching; GeoJSON payloads compressed; response times <300ms. | Lighthouse Performance Score $\ge 90$; Edge TTFB <150ms. |
-| **Compatibility** | Standard Web APIs; responsive layout functional across desktop, tablet, and low-end mobile. | Mobile viewport testing down to 320px width; MapLibre WebGL fallback. |
-| **Usability** | Plain language status indicators ("Normal", "Degraded", "Critical Dry"); offline stale banners. | Heuristic usability evaluation and ISO 9241-11 compliance. |
-| **Reliability** | Redundant edge routing; graceful degradation to cached status views during DB maintenance. | Zero uncaught runtime exceptions; automated health probe (`/api/health`). |
-| **Security** | RLS on every table; parameterized queries; Turnstile anti-bot; immutable audit triggers. | 0 critical/high findings on automated security audits and SAST scans. |
-| **Maintainability** | Strict modular migrations (`0001`–`0009`); explicit TypeScript types; documented interfaces. | Strict TypeScript compilation (`noEmit`) without errors. |
-
-### 6.2 ISO/IEC 27001 & RA 10173 Security & Privacy Control Matrix
-
-| Standard Reference | Security Control Domain | OWTA Technical Safeguard |
-| :--- | :--- | :--- |
-| **RA 10173 Sec. 11** | General Data Privacy Principles | Privacy by Design: Anonymous reporting by default; no citizen accounts required for reporting. |
-| **RA 10173 Sec. 12** | Lawful Processing of Personal Data | Explicit consent timestamp (`consent_at`) required for mobile phone storage; opt-out honored instantly. |
-| **RA 10173 Sec. 20** | Security of Personal Data | Contact numbers encrypted with pgcrypto / AES-256; device fingerprints salted with secret pepper. |
-| **RA 10173 Sec. 21** | Principle of Retention & Disposal | Automated nightly `pg_cron` worker executes `purge_expired_pii()` on resolved reports > 30 days. |
-| **ISO 27001 A.9.4** | System and Application Access Control | Multi-tier RBAC enforced via PostgreSQL RLS with `auth.app_role()` security definer function. |
-| **ISO 27001 A.12.4**| Logging and Monitoring | Immutable `audit_logs` table with DB triggers preventing deletion or modification by any role. |
-| **ISO 27001 A.13.1**| Network Security Management | Strict Content Security Policy (CSP), TLS 1.3 enforced, HSTS headers, secure cookie attributes. |
-

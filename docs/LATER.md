@@ -1,103 +1,69 @@
 # OWTA: Deferred Capabilities & Future Roadmap
-## Phase 3 Architecture Parking Lot & Scope Restrictions
+## Phase 2 (Next) and Phase 3 (Later) Scope Control
 
 **Document Code:** OWTA-LATER-V1  
 **Classification:** Scope Boundary Control  
 **Status:** Frozen for Phase 1 (MVP)  
-**Governance:** Academic Defense & MVP Delivery Committee
+**Reference Documents:** `docs/CONTEXT.md`, `docs/DATA_MODEL.md`
 
 ---
 
 ## 1. Scope Boundary Philosophy
 
-To achieve an audit-ready, secure, and production-tested system within the designated engineering timeline, strict boundaries have been drawn around the **Iloilo Water Transparency Tracker (OWTA)**. 
+To achieve an audit-ready, secure, and production-tested system within the designated engineering timeline, strict boundaries have been drawn around the **Open Water Transparency Architecture (OWTA)**.
 
-Every feature listed in this document has been deliberately evaluated, architecturally scoped, and **explicitly deferred** to Phase 2 or Phase 3. Attempting to implement these items during Phase 1 introduces unacceptable hardware dependencies, operational friction, regulatory hurdles, or scope creep that would compromise the core mission of transparent municipal water accounting.
-
----
-
-## 2. Explicitly Deferred Capabilities Catalog
-
-```
-┌──────────────────────────────────────────────────────────────────────────────────┐
-│                         PHASE 3 PARKING LOT CATALOG                              │
-├────────────────────────────┬─────────────────────────┬───────────────────────────┤
-│ Catalog Code               │ Feature Title           │ Primary Deferral Reason   │
-├────────────────────────────┼─────────────────────────┼───────────────────────────┤
-│ FR-SCH-07                  │ Hardware IoT Telemetry  │ Hardware procurement,     │
-│                            │                         │ battery & SIM maintenance │
-├────────────────────────────┼─────────────────────────┼───────────────────────────┤
-│ FR-REL-03                  │ Live Tanker GPS Track   │ Fleet OBD-II hardware,    │
-│                            │                         │ driver device compliance  │
-├────────────────────────────┼─────────────────────────┼───────────────────────────┤
-│ FR-ALR-05                  │ Viber / Telegram Bots   │ Multi-platform webhook &  │
-│                            │                         │ bot state machine overhead│
-├────────────────────────────┼─────────────────────────┼───────────────────────────┤
-│ FR-GEO-02                  │ Pipe Network Hydraulics │ Proprietary utility GIS,  │
-│                            │ (EPANET Digital Twin)   │ complex hydraulic math    │
-├────────────────────────────┼─────────────────────────┼───────────────────────────┤
-│ FR-REG-01                  │ In-App Billing Disputes │ NWRB statutory regulatory │
-│                            │                         │ legal jurisdiction        │
-├────────────────────────────┼─────────────────────────┼───────────────────────────┤
-│ FR-LAB-01                  │ Water Quality Lab Certs │ DOH laboratory chain of   │
-│                            │                         │ custody certification     │
-└────────────────────────────┴─────────────────────────┴───────────────────────────┘
-```
+- **Phase 1 (MVP - Active Scope):** Public portal, manual operator schedules, manual readings, citizen reports with spatiotemporal deduplication, relief priority queue, published methodology and weekly index, admin user verification, and immutable audit trail.
+- **Phase 2 (Next):** Features planned for the immediate post-pilot iteration that require additional third-party contracts (e.g., SMS carrier gateway, object storage).
+- **Phase 3 (Later - Not Authorized):** Complex hardware, proprietary GIS, or regulatory features that are strictly out of scope for the software platform.
 
 ---
 
-### 2.1 Hardware Sensor Telemetry (`FR-SCH-07`)
-* **Feature Concept:** Deploying automated cellular/LoRaWAN physical pressure transducers into fire hydrants, district meters, and distribution mains across Iloilo City for second-by-second telemetry streaming.
-* **Architectural Rationale for Deferral:**
-  1. *Hardware Procurement & Capital Expense:* Deploying certified, vandal-resistant, IP68-rated pressure sensors across 30+ DMAs requires municipal capital outlays and utility physical permits that exceed software development timelines.
-  2. *Maintenance & Sensor Drift:* Field sensors in tropical, corrosive environments require periodic recalibration and battery replacements; sensor drift can introduce false pressure data.
-* **Phase 1 Solution:** Calibrated manual gauge tests performed by certified utility operators and roving barangay focal persons satisfy the weekly Delivery Index requirements under strict boundary verification (`WR03`).
-* **Phase 3 Path:** Expose a secure, authenticated REST endpoint (`POST /api/telemetry/iot`) accepting signed JSON payloads from approved LoRaWAN gateways.
+## 2. Phase 2 Capabilities (Next Phase)
+
+These capabilities have data schema definitions ready in `docs/DATA_MODEL.md` (e.g., `subscriptions`, `notifications`, `period_notes`) but are deferred until the core MVP is proven:
+
+| Capability | Scope & Description | Reason for Deferral to Phase 2 |
+|---|---|---|
+| **SMS Subscriptions & Outbox** | Automated transactional SMS alerts for schedule updates, emergency advisories, and ticket resolution via `subscriptions` and `notifications`. | Requires telecom aggregator account (Semaphore/PhilSMS), delivery budget, and outbox drain worker. |
+| **Right-of-Reply Notes** | Utility and LGU attached notes (`period_notes`) on specific DMA weekly delivery index periods (`WR10`). | Operational agreement with utility data stewards to be established during pilot. |
+| **Multilingual Localization** | Full UI string externalization in `i18n/` for **Hiligaynon** and **Filipino (Tagalog)**. | Translation validation and copy review with pilot barangay leaders. |
+| **Realtime Staff Dashboard** | Supabase Realtime channel subscriptions for live updating of the barangay triage portal and CDRRMO dispatch queue. | MVP uses fast on-demand server revalidation and polling to conserve connection pools. |
+| **Incident Photo Upload** | Uploading photographic evidence of pipe bursts or water discoloration to private Supabase Storage buckets with EXIF stripping. | Requires storage bucket provisioning, virus scanning, and signed URL generation. |
+| **CSV Schedule Ingestion** | Bulk schedule import via spreadsheet upload for utility operators. | Operators will initially use the direct form entry desk for pilot DMAs. |
+| **PWA Offline Caching** | Service worker caching of last-known schedules and offline fallback banner. | Basic responsive web app tested first. |
 
 ---
 
-### 2.2 Live Water Tanker GPS Tracking (`FR-REL-03`)
-* **Feature Concept:** Embedding real-time OBD-II or dedicated GPS vehicle tracking units on all CDRRMO and BFP water relief tankers to render live moving vehicle icons on the public citizen map.
-* **Architectural Rationale for Deferral:**
-  1. *Driver Compliance & Hardware Dependency:* Municipal water relief operations often utilize contracted third-party private water lorries that do not possess standardized GPS telematics hardware.
-  2. *Operational Friction & Battery Drain:* Demanding that drivers keep dedicated mobile tracking apps running in the foreground leads to device battery exhaustion and communication dropouts.
-  3. *Security Concerns:* Broadcasting exact real-time coordinates of water tankers in water-starved areas can lead to vehicle mobbing or unscheduled route diversions before reaching the designated priority barangay.
-* **Phase 1 Solution:** Milestone state management (`QUEUED` $\rightarrow$ `IN_TRANSIT` $\rightarrow$ `ON_SITE` $\rightarrow$ `COMPLETED`) with closed-loop verification (`WR11`).
-* **Phase 3 Path:** Integrate with the City's centralized CDRRMO fleet management GPS API using periodic (60-second) batched coordinate updates.
+## 3. Phase 3 Capabilities (Explicitly Not Authorized)
 
----
+These features are out of scope and must **not** be built:
 
-### 2.3 Viber & Telegram Bot Integrations (`FR-ALR-05`)
-* **Feature Concept:** Developing interactive conversational chatbots on Viber and Telegram allowing citizens to query schedules and submit reports via chat dialogs.
-* **Architectural Rationale for Deferral:**
-  1. *Maintenance Overhead:* Maintaining separate bot SDKs, conversation trees, and webhook handlers across multiple closed proprietary platforms multiplies attack surfaces and ongoing maintenance costs.
-  2. *Digital Divide:* In rural and lower-income barangays, standard SMS and zero-rated web browsers are universally accessible, whereas Viber and Telegram require high-bandwidth data packages and specific app installations.
-* **Phase 1 Solution:** Next.js Progressive Web App (PWA) with installable home-screen shortcuts and carrier-neutral transactional SMS alerts via PhilSMS / Semaphore.
-* **Phase 3 Path:** Implement a unified omnichannel webhook layer leveraging a headless bot framework.
+### 3.1 Hardware Sensor Telemetry (`FR-SCH-07`)
+- **Concept:** Automated cellular/LoRaWAN physical pressure transducers in fire hydrants and distribution mains.
+- **Rationale:** Hardware procurement, IP68 casing, battery replacement, and physical utility valve access permits exceed the software project scope.
+- **Phase 1 Approach:** Calibrated manual gauge tests entered by operators or verified volunteers satisfy the weekly Delivery Index requirements (`WR12`).
 
----
+### 3.2 Live Water Tanker GPS Tracking (`FR-REL-03`)
+- **Concept:** Continuous OBD-II vehicle tracking units on all CDRRMO and contracted water lorries.
+- **Rationale:** Contracted third-party lorries lack standardized telematics; broadcasting live coordinates in water-starved areas creates vehicle mobbing risks.
+- **Phase 1 Approach:** Milestone state transitions (`requested` $\rightarrow$ `dispatched` $\rightarrow$ `delivered` or `cancelled`) with volume logging (`WR11`).
 
-### 2.4 PostGIS Pipe Network Hydraulics & EPANET Digital Twin (`FR-GEO-02`)
-* **Feature Concept:** Ingesting the utility's complete, detailed subterranean pipe geometry layers (pipe diameter, material, valve positions) and running online hydraulic network flow equations (Hazen-Williams / EPANET).
-* **Architectural Rationale for Deferral:**
-  1. *Proprietary Classification:* Water distribution piping layouts, valve node schematics, and critical infrastructure blueprints are proprietary security assets of MPIW / MIWD and protected from public disclosure.
-  2. *Computational Overhead:* Solving nonlinear hydraulic equations for thousands of pipe nodes exceeds web server edge compute capabilities.
-* **Phase 1 Solution:** Geospatial modeling bounded cleanly to District Metered Area (DMA) polygons and administrative Barangay boundaries (`0002_geography.sql`).
-* **Phase 3 Path:** Periodic offline batch ingestion of anonymized hydraulic capacity models rendered as read-only heatmaps.
+### 3.3 Viber & Telegram Bot Integrations (`FR-ALR-05`)
+- **Concept:** Conversational chatbots for querying schedules and submitting reports.
+- **Rationale:** Multiplies webhook attack surfaces and maintenance overhead. Standard web browsers and SMS reach 100% of the demographic.
+- **Phase 1 Approach:** Mobile-first responsive web app with zero-friction anonymous reporting.
 
----
+### 3.4 Pipe Network Hydraulics & EPANET Digital Twin (`FR-GEO-02`)
+- **Concept:** Ingesting utility pipe geometry (diameter, material, roughness) and running hydraulic flow simulations.
+- **Rationale:** Pipe blueprints are classified proprietary utility assets; solving nonlinear hydraulic equations exceeds web edge compute capabilities.
+- **Phase 1 Approach:** Geographic modeling strictly bounded to District Metered Area (DMA) polygons and administrative Barangay boundaries.
 
-### 2.5 In-App Billing Disputes & Tariff Adjudication (`FR-REG-01`)
-* **Feature Concept:** Allowing consumers to upload monthly water bills, dispute water meter charges, and initiate legal mediation over billing during low-pressure periods.
-* **Architectural Rationale for Deferral:**
-  * Tariff regulation, billing audits, and consumer rebate adjudications are statutory powers legally reserved for the **National Water Resources Board (NWRB)** and the **Local Water Utilities Administration (LWUA)**. Incorporating billing disputes compromises OWTA's neutral role as an objective operational telemetry platform.
-* **Phase 1 Boundary:** Strictly out of scope. Consumers are directed to standard official utility customer care desks.
+### 3.5 In-App Billing Disputes & Tariff Adjudication (`FR-REG-01`)
+- **Concept:** Meter billing complaints, dispute resolution, and rebate calculations.
+- **Rationale:** Tariff regulation and billing adjudications are statutory powers legally reserved for the **National Water Resources Board (NWRB)** and the **Local Water Utilities Administration (LWUA)**.
+- **Phase 1 Approach:** OWTA remains an objective, neutral operational transparency system. Billing disputes are directed to utility customer desks.
 
----
-
-### 2.6 Laboratory Water Quality Certifications (`FR-LAB-01`)
-* **Feature Concept:** Direct integration with Department of Health (DOH) accredited microbiological testing laboratories for chain-of-custody tracking of chemical and coliform test samples.
-* **Architectural Rationale for Deferral:**
-  * Chemical and biological potability testing requires physical chain-of-custody documentation, cold-chain preservation, and statutory laboratory signatures. 
-* **Phase 1 Boundary:** The system accepts qualitative citizen observational alerts (`dirty_water`, `turbid`, `foul_odor`), which immediately notify barangay health workers, but does not certify potability.
-
+### 3.6 Laboratory Water Quality Certifications (`FR-LAB-01`)
+- **Concept:** Direct integration with DOH accredited laboratories for chemical and biological potability certificates.
+- **Rationale:** Requires physical chain-of-custody documentation, cold-chain preservation, and statutory laboratory signatures.
+- **Phase 1 Approach:** The system accepts qualitative citizen reports (`discolored_water`, `dry_tap`, `pipe_burst`) for operational alerting.
