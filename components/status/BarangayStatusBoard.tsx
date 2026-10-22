@@ -18,6 +18,7 @@ import {
   RefreshCw,
   ExternalLink,
   SlidersHorizontal,
+  ChevronRight,
 } from "lucide-react"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -211,21 +212,21 @@ export function BarangayStatusBoard({
   }
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6 sm:space-y-8">
       {/* 1. Global Stale Telemetry Warning Banner (WR03) */}
       {isGlobalStale && (
         <div
           role="alert"
-          className="flex items-start gap-3.5 p-4 rounded-xl border border-amber-300 bg-amber-50/90 dark:bg-amber-950/20 dark:border-amber-900/60 text-amber-900 dark:text-amber-200 shadow-xs"
+          className="flex items-start gap-3.5 p-5 rounded-2xl border border-amber-300 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/30 text-amber-950 dark:text-amber-200 shadow-sm"
         >
           <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
           <div className="text-sm">
-            <h4 className="font-semibold text-amber-950 dark:text-amber-100 flex items-center gap-2">
-              <span>Telemetry Notice: Field Ingestion Window Delayed</span>
+            <h4 className="font-bold text-amber-950 dark:text-amber-100 flex items-center gap-2">
+              <span>Delayed Field Ingestion Notice</span>
               <Badge variant="warning">Rule WR03</Badge>
             </h4>
-            <p className="mt-0.5 text-xs text-amber-800/90 dark:text-amber-300/90 leading-relaxed">
-              District monitoring telemetry was last synchronized at{" "}
+            <p className="mt-1 text-xs text-amber-900/90 dark:text-amber-300/90 leading-relaxed">
+              Distribution gauge telemetry was last synchronized at{" "}
               <span className="font-mono font-medium">{formatManilaTime(globalAsOf)}</span>. Displaying last-known public
               status pursuant to Statutory Transparency Rule WR03.
             </p>
@@ -233,84 +234,93 @@ export function BarangayStatusBoard({
         </div>
       )}
 
-      {/* 2. Citywide Telemetry Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {/* 2. Citywide Telemetry Summary Cards with Elevated Depth & Soft Shadows */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Barangays Monitored */}
-        <div className="p-4 rounded-xl border border-slate-200/80 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-xs">
+        <div className="p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Coverage Scope
             </span>
             <Badge variant="outline">7 Districts</Badge>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50 font-mono">
+          <div className="mt-2.5 flex items-baseline gap-2">
+            <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 font-mono">
               {statusCounts.total}
             </span>
-            <span className="text-xs text-slate-500 font-medium">Barangays</span>
+            <span className="text-xs text-slate-500 font-semibold">Barangays</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">100% PostGIS Geocoded</p>
+          <p className="text-[11px] text-slate-400 mt-1 font-medium">100% PostGIS Geocoded</p>
         </div>
 
         {/* Normal Operational Supply */}
-        <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 dark:bg-emerald-950/20 dark:border-emerald-900/50 shadow-xs">
+        <div className="p-5 rounded-2xl border border-emerald-200/90 dark:border-emerald-900/60 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
               Normal Supply
             </span>
-            <Droplet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <div className="w-6 h-6 rounded-md bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center text-emerald-600">
+              <Droplet className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold tracking-tight text-emerald-700 dark:text-emerald-300 font-mono">
+          <div className="mt-2.5 flex items-baseline gap-2">
+            <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-emerald-700 dark:text-emerald-300 font-mono">
               {statusCounts.normal}
             </span>
             <span className="text-xs text-slate-500 font-medium">
               ({statusCounts.total > 0 ? Math.round((statusCounts.normal / statusCounts.total) * 100) : 0}%)
             </span>
           </div>
-          <div className="mt-2">
+          <div className="mt-3">
             <Progress
               value={statusCounts.total > 0 ? (statusCounts.normal / statusCounts.total) * 100 : 0}
-              className="h-1.5 bg-emerald-100 dark:bg-emerald-950"
+              className="h-2 bg-emerald-100 dark:bg-emerald-950"
               indicatorClassName="bg-emerald-500"
             />
           </div>
         </div>
 
         {/* Rotational / Low Pressure */}
-        <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/40 dark:bg-amber-950/20 dark:border-amber-900/50 shadow-xs">
+        <div className="p-5 rounded-2xl border border-amber-200/90 dark:border-amber-900/60 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-amber-500" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-amber-800 dark:text-amber-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400">
               Low / Intermittent
             </span>
-            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+            <div className="w-6 h-6 rounded-md bg-amber-50 dark:bg-amber-950 flex items-center justify-center text-amber-600">
+              <AlertTriangle className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold tracking-tight text-amber-700 dark:text-amber-300 font-mono">
+          <div className="mt-2.5 flex items-baseline gap-2">
+            <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-amber-700 dark:text-amber-300 font-mono">
               {statusCounts.intermittent}
             </span>
             <span className="text-xs text-slate-500 font-medium">Rotational</span>
           </div>
-          <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1">
+          <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-2 font-medium">
             Pressure &lt; 7.0 PSI baseline
           </p>
         </div>
 
         {/* Severe Outage / Relief Priority */}
-        <div className="p-4 rounded-xl border border-rose-200 bg-rose-50/40 dark:bg-rose-950/20 dark:border-rose-900/50 shadow-xs">
+        <div className="p-5 rounded-2xl border border-rose-200/90 dark:border-rose-900/60 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-rose-500" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-rose-800 dark:text-rose-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-rose-800 dark:text-rose-400">
               Critical Dry
             </span>
-            <AlertOctagon className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+            <div className="w-6 h-6 rounded-md bg-rose-50 dark:bg-rose-950 flex items-center justify-center text-rose-600">
+              <AlertOctagon className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold tracking-tight text-rose-700 dark:text-rose-300 font-mono">
+          <div className="mt-2.5 flex items-baseline gap-2">
+            <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-rose-700 dark:text-rose-300 font-mono">
               {statusCounts.dry}
             </span>
-            <Badge variant="destructive">CDRRMO Queue</Badge>
+            <Badge variant="destructive">Relief Queue</Badge>
           </div>
-          <p className="text-[11px] text-rose-700 dark:text-rose-400 mt-1">
+          <p className="text-[11px] text-rose-700 dark:text-rose-400 mt-2 font-medium">
             Emergency tanker priority
           </p>
         </div>
@@ -319,18 +329,18 @@ export function BarangayStatusBoard({
       {/* 3. Main Views (Tabs: Table, District Map, Cards) */}
       <Tabs defaultValue="table" className="w-full space-y-4">
         {/* Top Control Bar with Tabs, Search, Filters, and Toggles */}
-        <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between p-3.5 rounded-xl border border-slate-200/80 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-xs">
+        <div className="flex flex-col lg:flex-row gap-3.5 items-stretch lg:items-center justify-between p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
           {/* View Mode Tabs */}
-          <TabsList>
-            <TabsTrigger value="table" className="flex items-center gap-1.5">
+          <TabsList className="bg-slate-100 dark:bg-slate-800 p-1">
+            <TabsTrigger value="table" className="flex items-center gap-1.5 py-1.5 px-3">
               <List className="w-3.5 h-3.5" />
               <span>Status Matrix</span>
             </TabsTrigger>
-            <TabsTrigger value="map" className="flex items-center gap-1.5">
+            <TabsTrigger value="map" className="flex items-center gap-1.5 py-1.5 px-3">
               <MapPin className="w-3.5 h-3.5" />
               <span>District Zones</span>
             </TabsTrigger>
-            <TabsTrigger value="cards" className="flex items-center gap-1.5">
+            <TabsTrigger value="cards" className="flex items-center gap-1.5 py-1.5 px-3">
               <LayoutGrid className="w-3.5 h-3.5" />
               <span>Facility Cards</span>
             </TabsTrigger>
@@ -338,23 +348,23 @@ export function BarangayStatusBoard({
 
           {/* Search Input */}
           <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Filter by barangay, code, or district..."
-              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+              placeholder="Search by barangay, code, or district..."
+              className="w-full pl-9 pr-3.5 py-2 text-xs rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
               aria-label="Filter barangays"
             />
           </div>
 
           {/* Actions & CSV Export */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-end lg:self-auto">
             <select
               value={selectedDistrict}
               onChange={(e) => setSelectedDistrict(e.target.value)}
-              className="text-xs font-semibold py-1.5 px-2.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500/40 cursor-pointer"
+              className="text-xs font-semibold py-2 px-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500/40 cursor-pointer"
               aria-label="Filter by district"
             >
               <option value="ALL">All Districts ({items.length})</option>
@@ -368,7 +378,7 @@ export function BarangayStatusBoard({
             <button
               type="button"
               onClick={handleExportCSV}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors shadow-2xs cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors shadow-2xs cursor-pointer"
               title="Download verified operational data as CSV"
             >
               <Download className="w-3.5 h-3.5 text-slate-500" />
@@ -377,9 +387,9 @@ export function BarangayStatusBoard({
           </div>
         </div>
 
-        {/* 4. Filter Toggles Strip (Switches) */}
-        <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl border border-slate-200/80 bg-slate-50/70 dark:bg-slate-900/60 dark:border-slate-800 text-xs">
-          <div className="flex flex-wrap items-center gap-4">
+        {/* 4. Filter Toggles Strip (Switches) with Subtle Tint */}
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl border border-slate-200/80 bg-slate-50 dark:bg-slate-900/60 dark:border-slate-800 shadow-2xs text-xs">
+          <div className="flex flex-wrap items-center gap-5">
             {/* Toggle 1: Outages Only */}
             <div className="flex items-center gap-2">
               <Switch
@@ -387,7 +397,7 @@ export function BarangayStatusBoard({
                 checked={onlyOutages}
                 onCheckedChange={setOnlyOutages}
               />
-              <label htmlFor="toggle-outages" className="font-medium text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+              <label htmlFor="toggle-outages" className="font-semibold text-slate-700 dark:text-slate-300 cursor-pointer select-none">
                 Show Outages Only
               </label>
             </div>
@@ -399,14 +409,14 @@ export function BarangayStatusBoard({
                 checked={onlyWithIncidents}
                 onCheckedChange={setOnlyWithIncidents}
               />
-              <label htmlFor="toggle-incidents" className="font-medium text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+              <label htmlFor="toggle-incidents" className="font-semibold text-slate-700 dark:text-slate-300 cursor-pointer select-none">
                 Active Citizen Clusters Only
               </label>
             </div>
           </div>
 
-          <div className="text-[11px] text-slate-500 font-mono">
-            Showing {filteredItems.length} of {items.length} Barangays
+          <div className="text-[11px] text-slate-500 font-mono font-medium">
+            Showing <strong className="text-slate-900 dark:text-slate-100 font-bold">{filteredItems.length}</strong> of {items.length} Barangays
           </div>
         </div>
 
@@ -419,39 +429,41 @@ export function BarangayStatusBoard({
           />
         </TabsContent>
 
-        {/* TAB 2: HIGH-DENSITY STATUS TABLE */}
+        {/* TAB 2: HIGH-DENSITY STATUS TABLE WITH PROPER DEPTH */}
         <TabsContent value="table">
           {filteredItems.length === 0 ? (
-            <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
-              <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">No matching barangays found</p>
-              <p className="text-xs text-slate-500 mt-1">Try clearing active toggles or selecting &quot;All Districts&quot;.</p>
+            <div className="p-14 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-sm">
+              <p className="text-base font-bold text-slate-800 dark:text-slate-200">No matching barangays found</p>
+              <p className="text-xs text-slate-500 mt-1">Try resetting the filter switches or selecting &quot;All Districts&quot;.</p>
             </div>
           ) : (
-            <div className="rounded-xl border border-slate-200/80 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden shadow-xs">
+            <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 uppercase tracking-wider font-semibold text-[11px]">
-                      <th scope="col" className="py-3 px-4">Barangay &amp; Code</th>
-                      <th scope="col" className="py-3 px-4">District</th>
-                      <th scope="col" className="py-3 px-4">Operational Status</th>
-                      <th scope="col" className="py-3 px-4 text-right">Pressure Gauge</th>
-                      <th scope="col" className="py-3 px-4">Scheduled Window</th>
-                      <th scope="col" className="py-3 px-4 text-center">Citizen Clusters</th>
-                      <th scope="col" className="py-3 px-4 text-right">Last Telemetry</th>
+                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 uppercase tracking-wider font-bold text-[11px]">
+                      <th scope="col" className="py-3.5 px-4">Barangay &amp; Code</th>
+                      <th scope="col" className="py-3.5 px-4">District</th>
+                      <th scope="col" className="py-3.5 px-4">Operational Status</th>
+                      <th scope="col" className="py-3.5 px-4 text-right">Pressure Gauge</th>
+                      <th scope="col" className="py-3.5 px-4">Scheduled Window</th>
+                      <th scope="col" className="py-3.5 px-4 text-center">Citizen Clusters</th>
+                      <th scope="col" className="py-3.5 px-4 text-right">Last Telemetry</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                    {filteredItems.map((item) => {
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-normal">
+                    {filteredItems.map((item, idx) => {
                       const psiVal = item.latest_psi !== null && item.latest_psi !== undefined ? Number(item.latest_psi) : null
 
                       return (
                         <tr
                           key={item.barangay_id}
-                          className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
+                          className={`hover:bg-slate-50/90 dark:hover:bg-slate-800/50 transition-colors ${
+                            idx % 2 === 1 ? "bg-slate-50/40 dark:bg-slate-900/30" : ""
+                          }`}
                         >
                           {/* Barangay Name & Sim Tag */}
-                          <td className="py-3 px-4 font-semibold text-slate-900 dark:text-slate-100">
+                          <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">
                             <div className="flex items-center gap-1.5">
                               <span>{item.barangay_name}</span>
                               <span className="font-mono text-[10px] text-slate-400 font-normal">
@@ -473,17 +485,17 @@ export function BarangayStatusBoard({
                           </td>
 
                           {/* District */}
-                          <td className="py-3 px-4 text-slate-500 dark:text-slate-400">
+                          <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 font-medium">
                             {item.district_name}
                           </td>
 
                           {/* Operational Status Badge */}
-                          <td className="py-3 px-4">
+                          <td className="py-3.5 px-4">
                             <StatusBadge status={item.current_status} isStale={item.is_stale} />
                           </td>
 
                           {/* Pressure Gauge + Micro Bar */}
-                          <td className="py-3 px-4 text-right">
+                          <td className="py-3.5 px-4 text-right">
                             {psiVal !== null ? (
                               <div className="inline-flex flex-col items-end gap-1">
                                 <span className={`font-mono font-bold ${
@@ -491,7 +503,7 @@ export function BarangayStatusBoard({
                                 }`}>
                                   {psiVal.toFixed(1)} PSI
                                 </span>
-                                <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                <div className="w-16 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
                                   <div
                                     style={{ width: `${Math.min(100, (psiVal / 20) * 100)}%` }}
                                     className={`h-full ${
@@ -506,13 +518,13 @@ export function BarangayStatusBoard({
                           </td>
 
                           {/* Scheduled Window */}
-                          <td className="py-3 px-4 text-xs">
+                          <td className="py-3.5 px-4 text-xs">
                             {item.current_window_end ? (
-                              <span className="text-emerald-700 dark:text-emerald-400 font-medium">
+                              <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
                                 Active until {formatManilaTime(item.current_window_end)}
                               </span>
                             ) : item.next_window_start ? (
-                              <span className="text-sky-700 dark:text-sky-400">
+                              <span className="text-sky-700 dark:text-sky-400 font-medium">
                                 Next: {formatManilaTime(item.next_window_start)}
                               </span>
                             ) : (
@@ -521,7 +533,7 @@ export function BarangayStatusBoard({
                           </td>
 
                           {/* Citizen Incident Clusters */}
-                          <td className="py-3 px-4 text-center">
+                          <td className="py-3.5 px-4 text-center">
                             {item.active_incident_clusters > 0 ? (
                               <Badge variant="destructive">
                                 {item.active_incident_clusters} active
@@ -532,7 +544,7 @@ export function BarangayStatusBoard({
                           </td>
 
                           {/* Telemetry As Of */}
-                          <td className="py-3 px-4 text-right font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                          <td className="py-3.5 px-4 text-right font-mono text-[11px] text-slate-500 dark:text-slate-400">
                             {formatManilaTime(item.as_of)}
                           </td>
                         </tr>
@@ -551,22 +563,22 @@ export function BarangayStatusBoard({
             {filteredItems.map((item) => (
               <div
                 key={item.barangay_id}
-                className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
+                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-start justify-between gap-2 mb-2.5">
+                  <div className="flex items-start justify-between gap-2 mb-3">
                     <div>
-                      <h3 className="font-semibold text-base text-slate-900 dark:text-slate-50 leading-tight">
+                      <h3 className="font-bold text-base text-slate-900 dark:text-slate-50 leading-tight">
                         {item.barangay_name}
                       </h3>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        {item.district_name} • <span className="font-mono">{item.barangay_code}</span>
+                        {item.district_name} • <span className="font-mono font-medium">{item.barangay_code}</span>
                       </p>
                     </div>
                     <StatusBadge status={item.current_status} isStale={item.is_stale} />
                   </div>
 
-                  <div className="space-y-2 py-2.5 my-2 border-y border-slate-100 dark:border-slate-800 text-xs">
+                  <div className="space-y-2 py-3 my-2 border-y border-slate-100 dark:border-slate-800 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="text-slate-500">Gauge Pressure:</span>
                       <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
@@ -579,7 +591,7 @@ export function BarangayStatusBoard({
                     {item.current_window_end && (
                       <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400">
                         <span>Supply Window:</span>
-                        <span className="font-medium">Until {formatManilaTime(item.current_window_end)}</span>
+                        <span className="font-semibold">Until {formatManilaTime(item.current_window_end)}</span>
                       </div>
                     )}
 
@@ -608,24 +620,24 @@ export function BarangayStatusBoard({
       </Tabs>
 
       {/* 5. Citizen Report Emergency CTA Banner */}
-      <div className="p-5 rounded-xl border border-sky-200 bg-sky-50/70 dark:bg-sky-950/20 dark:border-sky-900/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+      <div className="p-6 rounded-2xl border border-sky-200 dark:border-sky-900/60 bg-gradient-to-r from-sky-50 to-blue-50 dark:from-sky-950/40 dark:to-slate-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 shadow-sm">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-sky-600 animate-ping"></span>
-            <h4 className="text-sm font-bold text-sky-950 dark:text-sky-100">
-              Experiencing an unverified municipal water outage?
+            <span className="w-2.5 h-2.5 rounded-full bg-sky-600 animate-ping"></span>
+            <h4 className="text-base font-bold text-sky-950 dark:text-sky-100">
+              Is your barangay experiencing an unlisted water outage?
             </h4>
           </div>
-          <p className="text-xs text-sky-800/90 dark:text-sky-300/90 max-w-2xl">
+          <p className="text-xs text-sky-800/90 dark:text-sky-300/90 max-w-2xl leading-relaxed">
             Reports are spatial-clustered within 200m and automatically queued on the Barangay Official Triage Desk. Verified high-severity incidents escalate directly to CDRRMO emergency water tanker dispatch.
           </p>
         </div>
         <Link
           href="/report"
-          className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg bg-sky-600 hover:bg-sky-700 text-white shadow-xs transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+          className="inline-flex items-center gap-2 px-5 py-3 text-xs font-bold rounded-xl bg-sky-600 hover:bg-sky-500 text-white shadow-md hover:shadow-lg transition-all whitespace-nowrap shrink-0 cursor-pointer"
         >
           <span>Report Outage (30s)</span>
-          <ExternalLink className="w-3.5 h-3.5" />
+          <ChevronRight className="w-4 h-4" />
         </Link>
       </div>
     </div>

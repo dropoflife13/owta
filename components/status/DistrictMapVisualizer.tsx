@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useMemo } from "react"
-import { Droplet, AlertTriangle, AlertOctagon, Users, MapPin, Gauge } from "lucide-react"
+import { Droplet, AlertTriangle, AlertOctagon, Users, MapPin, Gauge, CheckCircle2 } from "lucide-react"
 import { BarangayStatusItem } from "./BarangayStatusBoard"
 
 interface DistrictMapVisualizerProps {
@@ -40,7 +40,6 @@ export function DistrictMapVisualizer({
       psiCount: number
     }>()
 
-    // Ensure all 7 main districts exist in the map
     const defaultDistricts = [
       "City Proper",
       "Jaro",
@@ -133,15 +132,15 @@ export function DistrictMapVisualizer({
   }, [items])
 
   return (
-    <div className="rounded-xl border border-slate-200/80 bg-white dark:bg-slate-900 dark:border-slate-800 p-5 shadow-xs space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
+    <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
         <div>
-          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-sky-600" />
-            <span>Interactive Municipal District Visualizer</span>
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-sky-600 dark:text-sky-400" />
+            <span>Iloilo City District Geographic Zones</span>
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Select a district to isolate hydraulic telemetry and cluster triage queues across Iloilo City.
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Click on any municipal district below to immediately isolate and filter local water telemetry and citizen outage clusters.
           </p>
         </div>
 
@@ -149,30 +148,30 @@ export function DistrictMapVisualizer({
           <button
             type="button"
             onClick={() => onSelectDistrict("ALL")}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-sky-50 text-sky-700 hover:bg-sky-100 dark:bg-sky-950/60 dark:text-sky-300 dark:hover:bg-sky-900 border border-sky-200 dark:border-sky-800 transition-colors shadow-2xs cursor-pointer self-start sm:self-auto"
           >
-            <span>Reset to All Districts</span>
+            <span>Reset to All 7 Districts</span>
           </button>
         )}
       </div>
 
-      {/* Grid of Interactive District Cells */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Grid of Interactive District Cards with Depth & Shadows */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {districtSummaries.map((dist) => {
           const isSelected = selectedDistrict === dist.name
 
-          let statusBadgeClass = "bg-slate-100 text-slate-700 border-slate-200"
-          let borderAccent = "border-slate-200/80 dark:border-slate-800"
+          let statusBadgeClass = "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300"
+          let borderAccent = "border-slate-200 dark:border-slate-800"
 
           if (dist.status === "normal") {
-            statusBadgeClass = "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300"
-            borderAccent = isSelected ? "border-emerald-500 ring-2 ring-emerald-500/20" : "hover:border-emerald-300"
+            statusBadgeClass = "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300"
+            borderAccent = isSelected ? "border-emerald-500 ring-2 ring-emerald-500/20 shadow-md" : "hover:border-emerald-300"
           } else if (dist.status === "intermittent") {
-            statusBadgeClass = "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300"
-            borderAccent = isSelected ? "border-amber-500 ring-2 ring-amber-500/20" : "hover:border-amber-300"
+            statusBadgeClass = "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300"
+            borderAccent = isSelected ? "border-amber-500 ring-2 ring-amber-500/20 shadow-md" : "hover:border-amber-300"
           } else if (dist.status === "dry") {
-            statusBadgeClass = "bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300"
-            borderAccent = isSelected ? "border-rose-500 ring-2 ring-rose-500/20" : "hover:border-rose-300"
+            statusBadgeClass = "bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300"
+            borderAccent = isSelected ? "border-rose-500 ring-2 ring-rose-500/20 shadow-md" : "hover:border-rose-300"
           }
 
           return (
@@ -180,13 +179,13 @@ export function DistrictMapVisualizer({
               key={dist.name}
               type="button"
               onClick={() => onSelectDistrict(isSelected ? "ALL" : dist.name)}
-              className={`p-3.5 text-left rounded-xl border bg-slate-50/50 dark:bg-slate-800/40 transition-all flex flex-col justify-between cursor-pointer ${borderAccent} ${
-                isSelected ? "bg-white dark:bg-slate-800 shadow-xs" : ""
+              className={`p-4 text-left rounded-xl border bg-slate-50/80 dark:bg-slate-800/40 shadow-xs hover:shadow-md transition-all flex flex-col justify-between cursor-pointer ${borderAccent} ${
+                isSelected ? "bg-white dark:bg-slate-800 shadow-md scale-[1.01]" : ""
               }`}
             >
               <div>
-                <div className="flex items-start justify-between gap-1.5 mb-2">
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100 leading-tight">
+                <div className="flex items-start justify-between gap-1.5 mb-2.5">
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-slate-50 leading-tight">
                     {dist.name}
                   </h4>
                   <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${statusBadgeClass}`}>
@@ -194,17 +193,17 @@ export function DistrictMapVisualizer({
                   </span>
                 </div>
 
-                <div className="space-y-1.5 text-xs text-slate-500 dark:text-slate-400">
+                <div className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
                   <div className="flex items-center justify-between">
-                    <span>Monitored:</span>
-                    <span className="font-medium text-slate-700 dark:text-slate-300 font-mono">
+                    <span className="text-slate-500">Monitored Scope:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
                       {dist.totalBarangays} barangays
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1">
-                      <Gauge className="w-3 h-3 text-slate-400" />
+                    <span className="flex items-center gap-1 text-slate-500">
+                      <Gauge className="w-3.5 h-3.5 text-slate-400" />
                       Mean Pressure:
                     </span>
                     <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
@@ -213,17 +212,19 @@ export function DistrictMapVisualizer({
                   </div>
 
                   {dist.totalClusters > 0 && (
-                    <div className="flex items-center justify-between text-rose-600 dark:text-rose-400 font-semibold">
+                    <div className="flex items-center justify-between text-rose-600 dark:text-rose-400 font-bold">
                       <span>Outage Clusters:</span>
-                      <span>{dist.totalClusters} active</span>
+                      <span className="bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 px-1.5 py-0.2 rounded text-[10px]">
+                        {dist.totalClusters} active
+                      </span>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Progress mini-bar */}
-              <div className="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-700/60">
-                <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden flex">
+              {/* Proportional status bar */}
+              <div className="mt-3 pt-3 border-t border-slate-200/80 dark:border-slate-700/80">
+                <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden flex shadow-inner">
                   <div
                     style={{ width: `${dist.totalBarangays > 0 ? (dist.normalCount / dist.totalBarangays) * 100 : 0}%` }}
                     className="bg-emerald-500 h-full"
@@ -240,9 +241,9 @@ export function DistrictMapVisualizer({
                     title={`Dry: ${dist.dryCount}`}
                   />
                 </div>
-                <div className="flex items-center justify-between text-[10px] text-slate-400 mt-1">
-                  <span>{dist.normalCount} normal</span>
-                  <span>{dist.dryCount > 0 ? `${dist.dryCount} dry` : "0 dry"}</span>
+                <div className="flex items-center justify-between text-[10px] text-slate-400 mt-1.5 font-medium">
+                  <span className="text-emerald-700 dark:text-emerald-400">{dist.normalCount} normal</span>
+                  <span className="text-rose-600 dark:text-rose-400">{dist.dryCount > 0 ? `${dist.dryCount} dry` : "0 dry"}</span>
                 </div>
               </div>
             </button>

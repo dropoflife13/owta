@@ -22,6 +22,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { GovTopBar } from "./GovTopBar"
+import { ThemeToggle } from "./ThemeToggle"
 
 export function PublicHeader() {
   const pathname = usePathname()
@@ -39,19 +40,19 @@ export function PublicHeader() {
       {/* Official Government Authority & Live Clock Bar */}
       <GovTopBar />
 
-      <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md">
+      <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xs transition-colors">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           {/* Logo and Brand */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-sky-600 group-hover:bg-sky-700 transition-colors flex items-center justify-center text-white shadow-xs">
-              <Droplet className="w-4 h-4 fill-current" />
+            <div className="w-9 h-9 rounded-xl bg-sky-600 group-hover:bg-sky-700 transition-colors flex items-center justify-center text-white shadow-sm">
+              <Droplet className="w-5 h-5 fill-current" />
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-slate-50">
                   OWTA
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
                   Iloilo City
                 </span>
               </div>
@@ -72,7 +73,7 @@ export function PublicHeader() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-sky-600 hover:bg-sky-700 text-white shadow-xs transition-colors ml-1 cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-lg bg-sky-600 hover:bg-sky-700 text-white shadow-xs hover:shadow transition-all ml-1 cursor-pointer"
                   >
                     <Icon className="w-3.5 h-3.5" />
                     <span>{item.label}</span>
@@ -86,8 +87,8 @@ export function PublicHeader() {
                   href={item.href}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
                     isActive
-                      ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-50"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/60"
+                      ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-50 shadow-2xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/60"
                   }`}
                 >
                   <Icon className={`w-3.5 h-3.5 ${isActive ? "text-sky-600 dark:text-sky-400" : "text-slate-400"}`} />
@@ -105,10 +106,17 @@ export function PublicHeader() {
               <Lock className="w-3.5 h-3.5 text-slate-400" />
               <span>Staff Portal</span>
             </Link>
+
+            {/* Dark Mode Switcher */}
+            <div className="ml-1 pl-1 border-l border-slate-200 dark:border-slate-800">
+              <ThemeToggle />
+            </div>
           </nav>
 
-          {/* Mobile Navigation Drawer Trigger */}
+          {/* Mobile Navigation & Dark Mode Toggle */}
           <div className="md:hidden flex items-center gap-2">
+            <ThemeToggle />
+
             <Link
               href="/report"
               className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold rounded-lg bg-sky-600 hover:bg-sky-700 text-white shadow-xs"
@@ -128,7 +136,7 @@ export function PublicHeader() {
                 </button>
               </SheetTrigger>
 
-              <SheetContent side="right" className="w-72 p-6 flex flex-col justify-between">
+              <SheetContent side="right" className="w-72 p-6 flex flex-col justify-between bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800">
                 <div>
                   <SheetHeader className="mb-6 text-left">
                     <div className="flex items-center gap-2.5">
