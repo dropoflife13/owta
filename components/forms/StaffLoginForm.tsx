@@ -59,6 +59,18 @@ const DEMO_ACCOUNTS: DemoAccount[] = [
     },
   },
   {
+    label: "MPIW Utility Operator",
+    roleName: "Concessionaire Operator (MPIW)",
+    email: "operator.mpiw@owta.iloilo.gov.ph",
+    password: "IloiloWater2026!",
+    meta: {
+      role: "utility_operator",
+      first_name: "MPIW",
+      last_name: "Water Operator",
+      is_verified: true,
+    },
+  },
+  {
     label: "System Admin",
     roleName: "Administrator",
     email: "admin.sys@owta.iloilo.gov.ph",
@@ -106,15 +118,26 @@ export function StaffLoginForm() {
       })
 
       if (!signInError && signInData?.session) {
-        setStatusMsg("Authentication successful! Redirecting to triage desk...")
-        router.push("/staff/reports")
+        setStatusMsg("Authentication successful! Redirecting to staff desk...")
+        const isOperator = cleanEmail.includes("operator")
+        const isDispatcher = cleanEmail.includes("dispatcher")
+        const targetPath = isOperator
+          ? "/staff/schedules"
+          : isDispatcher
+          ? "/staff/relief"
+          : "/staff/reports"
+        router.push(targetPath)
         router.refresh()
         return
       }
 
       // 2. If user not found, check if it's one of the configured demo accounts to auto-provision
       const matchedDemo = DEMO_ACCOUNTS.find((d) => d.email === cleanEmail)
-      if (matchedDemo && (signInError?.message?.includes("Invalid login") || signInError?.message?.includes("credentials"))) {
+      if (
+        matchedDemo &&
+        (signInError?.message?.includes("Invalid login") ||
+          signInError?.message?.includes("credentials"))
+      ) {
         setStatusMsg("Initializing verified demonstration account in Supabase...")
 
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
@@ -132,13 +155,18 @@ export function StaffLoginForm() {
         }
 
         if (signUpData?.session) {
-          setStatusMsg("Account initialized and verified! Loading triage desk...")
-          router.push("/staff/reports")
+          setStatusMsg("Account initialized and verified! Loading staff desk...")
+          const targetPath =
+            matchedDemo.meta.role === "utility_operator"
+              ? "/staff/schedules"
+              : matchedDemo.meta.role === "lgu_dispatcher"
+              ? "/staff/relief"
+              : "/staff/reports"
+          router.push(targetPath)
           router.refresh()
           return
         } else {
-          // In case email confirmation is required on Supabase Project settings
-          // try signing in once more
+          // Retry signIn in case email confirmation was skipped
           const { error: retryError } = await supabase.auth.signInWithPassword({
             email: cleanEmail,
             password,
@@ -169,9 +197,9 @@ export function StaffLoginForm() {
           <div className="w-10 h-10 rounded-xl bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 flex items-center justify-center mx-auto mb-2">
             <Lock className="w-5 h-5" />
           </div>
-          <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">Staff & Official Sign In</h1>
+          <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">Staff &amp; Official Sign In</h1>
           <p className="text-xs text-zinc-500">
-            Role-Based Triage Portal for Barangay Officials, CDRRMO Dispatchers, and Utility Operators.
+            Role-Based Access for Barangay Officials, CDRRMO Dispatchers, and Concessionaire Operators.
           </p>
         </div>
 
@@ -246,7 +274,7 @@ export function StaffLoginForm() {
         {/* Demo Fast-Fill Selector */}
         <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-2.5">
           <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 text-center">
-            Demo & Review Fast-Fill
+            Demo &amp; Review Fast-Fill
           </p>
           <div className="grid grid-cols-2 gap-2 text-xs">
             {DEMO_ACCOUNTS.map((acc) => (
@@ -266,4 +294,3 @@ export function StaffLoginForm() {
     </div>
   )
 }
-

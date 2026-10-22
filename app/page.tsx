@@ -2,7 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { BarangayStatusBoard, BarangayStatusItem } from '@/components/status/BarangayStatusBoard'
-import { Droplet, AlertTriangle, FileText, Lock, PlusCircle } from 'lucide-react'
+import { Droplet, AlertTriangle, FileText, Lock, PlusCircle, BarChart3 } from 'lucide-react'
 
 export const instant = false
 
@@ -34,7 +34,7 @@ export default async function HomePage() {
   const supabase = createClient(cookieStore)
 
   // 1. Fetch live barangay statuses from view
-  const { data: statusRows, error: statusError } = await supabase
+  const { data: statusRows } = await supabase
     .from('v_public_barangay_status')
     .select('*')
     .order('barangay_name')
@@ -60,31 +60,34 @@ export default async function HomePage() {
         readingsByBarangay[r.barangay_id] = {
           psi: Number(r.pressure_psi),
           recorded_at: r.recorded_at,
-          is_simulated: r.is_simulated || r.source === 'simulated',
+          is_simulated: Boolean(r.is_simulated),
         }
       }
     }
   }
 
-  // Determine global staleness
+  // Derive global stale flag
   const isGlobalStale = newestRecordedAt
     ? nowMs - new Date(newestRecordedAt).getTime() > STALE_THRESHOLD_MS
     : true
 
-  // Combine view rows with reading data
-  const statusItems: BarangayStatusItem[] = (statusRows || []).map((row) => {
+  // Combine and format for presentation
+  const barangays: BarangayStatusItem[] = (statusRows || []).map((row: any) => {
     const reading = readingsByBarangay[row.barangay_id]
-    const asOfTime = reading?.recorded_at || null
-    const isItemStale = asOfTime
-      ? nowMs - new Date(asOfTime).getTime() > STALE_THRESHOLD_MS
-      : true
+
+    let asOfTime = reading?.recorded_at || newestRecordedAt
+    let isItemStale = isGlobalStale
+
+    if (reading?.recorded_at) {
+      isItemStale = nowMs - new Date(reading.recorded_at).getTime() > STALE_THRESHOLD_MS
+    }
 
     return {
       barangay_id: row.barangay_id,
-      barangay_code: row.barangay_code,
+      barangay_code: row.barangay_code || 'BRGY',
       barangay_name: row.barangay_name,
-      district_name: row.district_name || 'Iloilo City',
-      current_status: row.current_status,
+      district_name: row.district_name || 'Mandurriao',
+      current_status: row.current_status || 'unknown',
       current_window_end: row.current_window_end,
       next_window_start: row.next_window_start,
       active_incident_clusters: Number(row.active_incident_clusters || 0),
@@ -126,6 +129,14 @@ export default async function HomePage() {
             </Link>
 
             <Link
+              href="/index"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 transition-colors"
+            >
+              <BarChart3 className="w-3.5 h-3.5 text-blue-600" />
+              <span className="hidden sm:inline">Delivery Index</span>
+            </Link>
+
+            <Link
               href="/methodology"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 transition-colors"
             >
@@ -134,7 +145,7 @@ export default async function HomePage() {
             </Link>
 
             <Link
-              href="/staff"
+              href="/login"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
             >
               <Lock className="w-3.5 h-3.5" />
@@ -148,25 +159,17 @@ export default async function HomePage() {
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
         {/* Hero Section */}
         <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Iloilo Water Transparency Status
+          <h1 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-zinc-50 tracking-tight">
+            Iloilo City Water Transparency
           </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Real-time municipal tap status, published rotational supply windows, and evidence-based relief triage.
+          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 max-w-2xl leading-relaxed">
+            Real-time public status board and telemetry-verified delivery index across Mandurriao and participating water districts. Every figure backed by sensor timestamps.
           </p>
         </div>
 
-        {/* Database Error Banner (if any) */}
-        {statusError && (
-          <div className="p-4 rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 text-sm flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span>Database Connection Notice: {statusError.message}</span>
-          </div>
-        )}
-
-        {/* Interactive Barangay Status Board */}
+        {/* Status Board Component */}
         <BarangayStatusBoard
-          items={statusItems}
+          items={barangays}
           globalAsOf={newestRecordedAt}
           isGlobalStale={isGlobalStale}
         />
@@ -179,6 +182,10 @@ export default async function HomePage() {
             © 2026 OWTA — Open Water Transparency Architecture. Neutral, evidence-first civic water accounting.
           </p>
           <div className="flex items-center gap-4">
+            <Link href="/index" className="hover:underline">
+              Weekly Delivery Index
+            </Link>
+            <span>•</span>
             <Link href="/methodology" className="hover:underline">
               Delivery Index Method
             </Link>

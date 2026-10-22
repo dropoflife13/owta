@@ -28,9 +28,9 @@ Completes the public accountability loop: establishes an auditable record of pro
 3. Open the public schedule viewer and index page in an incognito window to verify the updated hours appear publicly with the active methodology link.
 
 ## Done looks like
-- [ ] Database blocks overlapping published schedule windows via GiST constraint (`WR01`).
-- [ ] Operator can supersede a schedule with replacement windows.
-- [ ] Public `/methodology` and `/index` render promised vs. delivered hours and coverage ratio.
-- [ ] Insufficient coverage ($< 70\%$) cleanly displays "Insufficient Data" rather than a false score.
-- [ ] Simulated data is visibly labeled (`WR12`).
+- [x] Database blocks overlapping published schedule windows via GiST constraint (`WR01`).
+- [x] Operator can supersede a schedule with replacement windows.
+- [x] Public `/methodology` and `/index` render promised vs. delivered hours and coverage ratio.
+- [x] Insufficient coverage ($< 70\%$) cleanly displays "Insufficient Data" rather than a false score.
+- [x] Simulated data is visibly labeled (`WR12`).
 
