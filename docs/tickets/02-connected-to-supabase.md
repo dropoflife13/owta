@@ -1,6 +1,6 @@
 # 02 — Connected to Supabase & Live Barangay Status
 
-Status: in-progress (Built, waiting for live site check)  
+Status: done  
 Blocked by: 01 (Done)
 
 ## What we are building
