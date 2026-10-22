@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Loader2,
   Navigation,
+  ExternalLink,
 } from "lucide-react"
 
 export interface BarangayOption {
@@ -31,38 +32,38 @@ const CATEGORIES = [
   {
     id: "dry_tap",
     label: "Dry Tap",
-    sub: "No water flowing at all",
+    sub: "Zero pressure, completely dry tap",
     icon: AlertOctagon,
-    color: "text-red-600 dark:text-red-400",
-    bg: "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/60",
-    activeRing: "ring-2 ring-red-500",
+    color: "text-rose-600 dark:text-rose-400",
+    bg: "bg-rose-50/80 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/50",
+    activeRing: "ring-2 ring-rose-500 border-rose-500",
   },
   {
     id: "low_pressure",
     label: "Low Pressure",
-    sub: "Trickle or weak tap pressure",
+    sub: "Trickle, degraded or erratic pressure",
     icon: AlertTriangle,
     color: "text-amber-600 dark:text-amber-400",
-    bg: "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60",
-    activeRing: "ring-2 ring-amber-500",
+    bg: "bg-amber-50/80 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/50",
+    activeRing: "ring-2 ring-amber-500 border-amber-500",
   },
   {
     id: "dirty_water",
     label: "Discolored Water",
-    sub: "Brown, turbid, or smelly water",
+    sub: "Brown, turbid, smelly or rusty water",
     icon: Droplet,
     color: "text-yellow-600 dark:text-yellow-400",
-    bg: "bg-yellow-50 dark:bg-yellow-950/40 border-yellow-200 dark:border-yellow-900/60",
-    activeRing: "ring-2 ring-yellow-500",
+    bg: "bg-yellow-50/80 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-900/50",
+    activeRing: "ring-2 ring-yellow-500 border-yellow-500",
   },
   {
     id: "pipe_burst",
-    label: "Pipe Burst",
-    sub: "Visible leak or gushing pipe",
+    label: "Pipe Burst / Leak",
+    sub: "Visible main leak or gushing water",
     icon: Waves,
-    color: "text-blue-600 dark:text-blue-400",
-    bg: "bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900/60",
-    activeRing: "ring-2 ring-blue-500",
+    color: "text-sky-600 dark:text-sky-400",
+    bg: "bg-sky-50/80 dark:bg-sky-950/20 border-sky-200 dark:border-sky-900/50",
+    activeRing: "ring-2 ring-sky-500 border-sky-500",
   },
 ]
 
@@ -120,7 +121,7 @@ export function CitizenReportForm({ barangays }: CitizenReportFormProps) {
       return
     }
     if (!landmark || landmark.trim().length < 3) {
-      setErrorMessage("Please enter a recognizable landmark (at least 3 characters).")
+      setErrorMessage("Please enter a recognizable landmark or street name (at least 3 characters).")
       return
     }
     if (phone && phone.trim() !== "" && !consent) {
@@ -180,25 +181,25 @@ export function CitizenReportForm({ barangays }: CitizenReportFormProps) {
   return (
     <div className="w-full max-w-xl mx-auto space-y-6">
       {/* Mode Navigation Tabs */}
-      <div className="flex rounded-xl bg-zinc-100 dark:bg-zinc-800/80 p-1 border border-zinc-200 dark:border-zinc-700/80">
+      <div className="flex rounded-xl bg-slate-100 dark:bg-slate-800/80 p-1 border border-slate-200 dark:border-slate-700">
         <button
           type="button"
           onClick={() => setActiveTab("submit")}
-          className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
+          className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${
             activeTab === "submit"
-              ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 shadow-xs"
-              : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
+              ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-50 shadow-xs"
+              : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
           }`}
         >
-          Submit New Report
+          Submit New Outage Report
         </button>
         <button
           type="button"
           onClick={() => setActiveTab("track")}
-          className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
+          className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${
             activeTab === "track"
-              ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 shadow-xs"
-              : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
+              ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-50 shadow-xs"
+              : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
           }`}
         >
           Track Existing Ticket
@@ -207,28 +208,28 @@ export function CitizenReportForm({ barangays }: CitizenReportFormProps) {
 
       {/* TRACK EXISTING TICKET TAB */}
       {activeTab === "track" && (
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-4">
           <div className="space-y-1">
-            <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-50">Track Outage Ticket</h2>
-            <p className="text-xs text-zinc-500">
-              Enter the 8-character reference token you received upon submitting your report (e.g. <code>OWTA-7B29M</code>).
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-50">Track Outage Ticket</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Enter the anonymous reference token you received upon filing (e.g. <code className="font-mono bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">OWTA-7B29M</code>).
             </p>
           </div>
 
-          <form onSubmit={handleTrackSubmit} className="space-y-3">
+          <form onSubmit={handleTrackSubmit} className="space-y-4">
             <div>
-              <label htmlFor="trackCode" className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                Ticket Reference Token
+              <label htmlFor="trackCode" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                Ticket Token
               </label>
               <div className="relative">
-                <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   id="trackCode"
                   type="text"
                   value={trackCode}
                   onChange={(e) => setTrackCode(e.target.value.toUpperCase())}
                   placeholder="OWTA-XXXXXX"
-                  className="w-full pl-9 pr-3 py-2 text-sm font-mono uppercase rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full pl-9 pr-3 py-2.5 text-sm font-mono uppercase rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
                   required
                 />
               </div>
@@ -236,7 +237,7 @@ export function CitizenReportForm({ barangays }: CitizenReportFormProps) {
 
             <button
               type="submit"
-              className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-xs"
+              className="w-full py-2.5 px-4 rounded-lg text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 transition-colors shadow-xs"
             >
               Check Incident Status
             </button>
@@ -248,21 +249,21 @@ export function CitizenReportForm({ barangays }: CitizenReportFormProps) {
       {activeTab === "submit" && (
         <form
           onSubmit={handleSubmit}
-          className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-5"
+          className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-5"
         >
           {errorMessage && (
-            <div className="p-3.5 rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 text-xs flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
+            <div className="p-3.5 rounded-lg border border-rose-200 bg-rose-50 dark:bg-rose-950/40 dark:border-rose-900/60 text-rose-800 dark:text-rose-300 text-xs flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
               <span>{errorMessage}</span>
             </div>
           )}
 
           {/* 1. Category Selection */}
           <div className="space-y-2">
-            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500">
-              1. What issue are you experiencing?
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              1. What issue are you experiencing? <span className="text-rose-500">*</span>
             </label>
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {CATEGORIES.map((cat) => {
                 const Icon = cat.icon
                 const isSelected = category === cat.id
@@ -271,14 +272,14 @@ export function CitizenReportForm({ barangays }: CitizenReportFormProps) {
                     key={cat.id}
                     type="button"
                     onClick={() => setCategory(cat.id)}
-                    className={`p-3 text-left rounded-xl border transition-all flex flex-col justify-between ${
+                    className={`p-3 text-left rounded-xl border transition-colors flex items-start gap-3 min-h-[48px] ${
                       cat.bg
-                    } ${isSelected ? cat.activeRing + " border-transparent" : "border-zinc-200 dark:border-zinc-800 opacity-80"}`}
+                    } ${isSelected ? cat.activeRing : "border-slate-200 dark:border-slate-800 hover:border-slate-300"}`}
                   >
-                    <Icon className={`w-5 h-5 ${cat.color} mb-1.5`} />
+                    <Icon className={`w-5 h-5 ${cat.color} shrink-0 mt-0.5`} />
                     <div>
-                      <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{cat.label}</p>
-                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-tight">{cat.sub}</p>
+                      <p className="text-xs font-bold text-slate-900 dark:text-slate-100">{cat.label}</p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">{cat.sub}</p>
                     </div>
                   </button>
                 )
@@ -288,131 +289,131 @@ export function CitizenReportForm({ barangays }: CitizenReportFormProps) {
 
           {/* 2. Barangay Selection */}
           <div className="space-y-1.5">
-            <label htmlFor="barangay" className="block text-xs font-bold uppercase tracking-wider text-zinc-500">
-              2. Select Your Barangay
+            <label htmlFor="barangay" className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              2. Select Your Barangay <span className="text-rose-500">*</span>
             </label>
             <select
               id="barangay"
               value={barangayId}
               onChange={(e) => setBarangayId(e.target.value)}
-              className="w-full text-sm py-2.5 px-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
+              className="w-full text-sm py-2.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500/40 font-medium cursor-pointer"
               required
             >
               {barangays.map((b) => (
                 <option key={b.id} value={b.id}>
-                  {b.name} ({b.district_name || "Iloilo City"})
+                  {b.name} ({b.district_name})
                 </option>
               ))}
             </select>
           </div>
 
-          {/* 3. Landmark & Location */}
+          {/* 3. Landmark / Approximate Location (Zero PII - Rule WR07) */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label htmlFor="landmark" className="block text-xs font-bold uppercase tracking-wider text-zinc-500">
-                3. Street or Landmark
+              <label htmlFor="landmark" className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                3. Nearest Landmark or Street <span className="text-rose-500">*</span>
               </label>
               <button
                 type="button"
                 onClick={handleDetectLocation}
                 disabled={geoLoading}
-                className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline disabled:opacity-50"
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-sky-700 dark:text-sky-400 hover:text-sky-800 disabled:opacity-50"
               >
                 {geoLoading ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <span>Detecting...</span>
+                  </>
                 ) : (
-                  <Navigation className="w-3 h-3" />
+                  <>
+                    <Navigation className="w-3 h-3" />
+                    <span>{coords ? "Location Attached ✓" : "Use GPS Pin"}</span>
+                  </>
                 )}
-                <span>{coords ? "Location Attached ✓" : "Attach GPS Pin"}</span>
               </button>
             </div>
             <div className="relative">
-              <MapPin className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
               <input
                 id="landmark"
                 type="text"
                 value={landmark}
                 onChange={(e) => setLandmark(e.target.value)}
-                placeholder="e.g. Corner Delgado St, near Plaza Fountain"
-                className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="e.g. Near Mandurriao Plaza, Corner Guzman St (no house numbers)"
+                className="w-full pl-9 pr-3 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
                 required
-                minLength={3}
-                maxLength={200}
               />
             </div>
-            {coords && (
-              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-0.5">
-                <CheckCircle2 className="w-3 h-3" /> GPS coordinates snapped ({coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}). Exact pin is kept staff-only (Rule WR07).
-              </p>
-            )}
+            <p className="text-[11px] text-slate-500">
+              For privacy (Rule WR07), do not provide exact residential house numbers. Mention street corners or landmarks.
+            </p>
           </div>
 
           {/* 4. Optional Description */}
           <div className="space-y-1.5">
-            <label htmlFor="description" className="block text-xs font-bold uppercase tracking-wider text-zinc-500">
-              4. Operational Notes (Optional)
+            <label htmlFor="description" className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              4. Additional Details <span className="text-slate-400 font-normal">(Optional)</span>
             </label>
             <textarea
               id="description"
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g. Pressure dropped suddenly around 6:30 AM"
-              className="w-full p-3 text-sm rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              maxLength={1000}
+              placeholder="e.g. Water stopped at 6:00 AM, affecting around 20 households in our purok."
+              className="w-full p-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
             />
           </div>
 
-          {/* 5. Optional Phone & RA 10173 Consent Checkbox */}
-          <div className="p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 space-y-3">
+          {/* 5. Optional Phone for SMS Notifications (RA 10173 Consent) */}
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-3">
             <div className="space-y-1">
-              <label htmlFor="phone" className="block text-xs font-semibold text-zinc-800 dark:text-zinc-200">
-                Resolution Updates via Mobile (Optional)
-              </label>
-              <div className="relative">
-                <Phone className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  id="phone"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="09171234567"
-                  className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
-                />
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-slate-100">
+                <Phone className="w-3.5 h-3.5 text-sky-600" />
+                <span>SMS Status Updates (Optional)</span>
               </div>
+              <p className="text-[11px] text-slate-500">
+                Receive an automatic SMS notification when your outage cluster is verified or a relief tanker is dispatched.
+              </p>
             </div>
 
-            {/* Consent Toggle (Rule WR09) */}
-            <label className="flex items-start gap-2.5 text-xs text-zinc-600 dark:text-zinc-400 cursor-pointer pt-1">
-              <input
-                type="checkbox"
-                checked={consent}
-                onChange={(e) => setConsent(e.target.checked)}
-                className="mt-0.5 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500"
-              />
-              <span className="leading-snug">
-                I explicitly consent to the temporary storage of my Philippine mobile number solely for receiving status
-                updates regarding this water outage pursuant to <strong className="text-zinc-800 dark:text-zinc-200">Republic Act No. 10173 (Data Privacy Act of 2012)</strong>. Numbers are auto-purged after 30 days.
-              </span>
-            </label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="0917XXXXXXX"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500/40 font-mono"
+            />
+
+            {phone.trim() !== "" && (
+              <label className="flex items-start gap-2.5 cursor-pointer pt-1">
+                <input
+                  type="checkbox"
+                  checked={consent}
+                  onChange={(e) => setConsent(e.target.checked)}
+                  className="mt-0.5 rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer"
+                  required={phone.trim() !== ""}
+                />
+                <span className="text-[11px] text-slate-600 dark:text-slate-400 leading-tight">
+                  I consent to OWTA storing my mobile number solely for incident resolution updates, pursuant to the{" "}
+                  <strong>Philippine Data Privacy Act of 2012 (RA 10173)</strong>. Numbers are cryptographically hashed and purged once resolved.
+                </span>
+              </label>
+            )}
           </div>
 
           {/* Submit Button */}
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-3 px-4 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-60"
+            className="w-full py-3 px-4 rounded-lg text-sm font-semibold text-white bg-sky-600 hover:bg-sky-700 transition-colors shadow-xs disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
           >
             {submitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Registering Outage Incident...</span>
+                <span>Recording Incident & Clustering...</span>
               </>
             ) : (
-              <>
-                <ShieldCheck className="w-4 h-4" />
-                <span>Submit Outage Report</span>
-              </>
+              <span>Submit Outage Report</span>
             )}
           </button>
         </form>
@@ -420,4 +421,3 @@ export function CitizenReportForm({ barangays }: CitizenReportFormProps) {
     </div>
   )
 }
-

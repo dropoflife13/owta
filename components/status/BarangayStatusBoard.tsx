@@ -1,7 +1,22 @@
 "use client"
 
 import React, { useState, useMemo } from "react"
-import { Search, Filter, Droplet, AlertTriangle, AlertOctagon, Info, HelpCircle, Clock, ShieldAlert } from "lucide-react"
+import {
+  Search,
+  Filter,
+  Droplet,
+  AlertTriangle,
+  AlertOctagon,
+  Clock,
+  ShieldAlert,
+  LayoutGrid,
+  List,
+  CheckCircle2,
+  RefreshCw,
+  ExternalLink,
+} from "lucide-react"
+import { StatusBadge } from "@/components/ui/status-badge"
+import Link from "next/link"
 
 export interface BarangayStatusItem {
   barangay_id: string
@@ -33,6 +48,7 @@ export function BarangayStatusBoard({
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedDistrict, setSelectedDistrict] = useState<string>("ALL")
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL")
+  const [viewMode, setViewMode] = useState<"table" | "cards">("table")
 
   // Extract unique districts
   const districts = useMemo(() => {
@@ -41,6 +57,34 @@ export function BarangayStatusBoard({
       if (item.district_name) set.add(item.district_name)
     })
     return Array.from(set).sort()
+  }, [items])
+
+  // Count statuses for KPI summary strip
+  const statusCounts = useMemo(() => {
+    let normal = 0
+    let intermittent = 0
+    let dry = 0
+    let rationed = 0
+    let unknown = 0
+
+    items.forEach((item) => {
+      const s = item.current_status?.toLowerCase() || "unknown"
+      if (item.is_stale) {
+        unknown++
+      } else if (s === "normal" || s === "flowing" || s === "scheduled_supply" || s === "normal_standby") {
+        normal++
+      } else if (s === "intermittent" || s === "low" || s === "degraded_pressure") {
+        intermittent++
+      } else if (s === "dry" || s === "critical_dry") {
+        dry++
+      } else if (s === "rationed" || s === "rotational") {
+        rationed++
+      } else {
+        unknown++
+      }
+    })
+
+    return { normal, intermittent, dry, rationed, unknown, total: items.length }
   }, [items])
 
   // Filtered items
@@ -54,82 +98,52 @@ export function BarangayStatusBoard({
       const matchesDistrict =
         selectedDistrict === "ALL" || item.district_name === selectedDistrict
 
-      const matchesStatus =
-        selectedStatus === "ALL" ||
-        item.current_status.toLowerCase() === selectedStatus.toLowerCase()
+      let matchesStatus = true
+      if (selectedStatus !== "ALL") {
+        const s = item.current_status?.toLowerCase() || "unknown"
+        if (selectedStatus === "normal") {
+          matchesStatus = s === "normal" || s === "flowing" || s === "scheduled_supply" || s === "normal_standby"
+        } else if (selectedStatus === "intermittent") {
+          matchesStatus = s === "intermittent" || s === "low" || s === "degraded_pressure"
+        } else if (selectedStatus === "dry") {
+          matchesStatus = s === "dry" || s === "critical_dry"
+        } else if (selectedStatus === "rationed") {
+          matchesStatus = s === "rationed" || s === "rotational"
+        }
+      }
 
       return matchesSearch && matchesDistrict && matchesStatus
     })
   }, [items, searchQuery, selectedDistrict, selectedStatus])
 
-  // Render status badge with icon (never color alone per WCAG AA)
-  const renderStatusBadge = (status: string, isStale?: boolean) => {
-    const s = status?.toUpperCase() || "UNKNOWN"
-
-    if (isStale) {
-      return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700">
-          <HelpCircle className="w-3.5 h-3.5 text-zinc-500" aria-hidden="true" />
-          <span>Unknown (Stale)</span>
-        </span>
-      )
-    }
-
-    switch (s) {
-      case "CRITICAL_DRY":
-      case "DRY":
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300 border border-red-300 dark:border-red-800">
-            <AlertOctagon className="w-3.5 h-3.5 text-red-600 dark:text-red-400" aria-hidden="true" />
-            <span>Critical Dry</span>
-          </span>
-        )
-      case "DEGRADED_PRESSURE":
-      case "LOW":
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
-            <span>Low Pressure</span>
-          </span>
-        )
-      case "SCHEDULED_SUPPLY":
-      case "FLOWING":
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
-            <Droplet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-            <span>Flowing Supply</span>
-          </span>
-        )
-      case "NORMAL_STANDBY":
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-300 dark:border-blue-800">
-            <Info className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
-            <span>Normal Standby</span>
-          </span>
-        )
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700">
-            <HelpCircle className="w-3.5 h-3.5 text-zinc-500" aria-hidden="true" />
-            <span>Unknown</span>
-          </span>
-        )
-    }
-  }
-
-  // Format date in Asia/Manila timezone
+  // Format date in Asia/Manila timezone with relative cues
   const formatManilaTime = (isoString?: string | null) => {
     if (!isoString) return "No telemetry recorded"
     try {
       const date = new Date(isoString)
-      return new Intl.DateTimeFormat("en-PH", {
+      const diffMinutes = Math.floor((Date.now() - date.getTime()) / (60 * 1000))
+      
+      const timeStr = new Intl.DateTimeFormat("en-PH", {
         timeZone: "Asia/Manila",
-        month: "short",
-        day: "numeric",
         hour: "2-digit",
         minute: "2-digit",
         hour12: true,
       }).format(date)
+
+      if (diffMinutes < 60) {
+        return `${Math.max(1, diffMinutes)}m ago (${timeStr} PHT)`
+      } else if (diffMinutes < 1440) {
+        return `${Math.floor(diffMinutes / 60)}h ago (${timeStr} PHT)`
+      } else {
+        return new Intl.DateTimeFormat("en-PH", {
+          timeZone: "Asia/Manila",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }).format(date) + " PHT"
+      }
     } catch {
       return isoString
     }
@@ -137,194 +151,351 @@ export function BarangayStatusBoard({
 
   return (
     <div className="w-full space-y-6">
-      {/* Global Stale Data Banner (WR03) */}
+      {/* 1. Global Stale Telemetry Banner (WR03) */}
       {isGlobalStale && (
         <div
           role="alert"
-          className="flex items-start gap-3 p-4 rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-900/60 text-amber-900 dark:text-amber-200"
+          className="flex items-start gap-3.5 p-4 rounded-xl border border-amber-200/80 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900/50 text-amber-900 dark:text-amber-200 shadow-xs"
         >
-          <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
           <div className="text-sm">
-            <p className="font-semibold">⚠️ Stale Telemetry Warning</p>
-            <p className="mt-0.5 text-xs text-amber-800 dark:text-amber-300">
-              Field gauge telemetry has not been updated within the standard 360-minute window (latest as of{" "}
-              <span className="font-mono font-medium">{formatManilaTime(globalAsOf)} PHT</span>). Live conditions may
-              vary. Displaying last-known operational data pursuant to WR03.
+            <h4 className="font-semibold text-amber-950 dark:text-amber-100">Telemetry Delayed / Historical Baseline</h4>
+            <p className="mt-0.5 text-xs text-amber-800/90 dark:text-amber-300/90 leading-relaxed">
+              Field telemetry from distribution monitoring points was last synchronized at{" "}
+              <span className="font-mono font-medium">{formatManilaTime(globalAsOf)}</span>. Displaying last-known public
+              status pursuant to Statutory Transparency Rule WR03.
             </p>
           </div>
         </div>
       )}
 
-      {/* Search and Filters Bar */}
-      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-xs">
-        {/* Search Input */}
+      {/* 2. Citywide KPI Summary Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="p-4 rounded-xl border border-slate-200/80 bg-white dark:bg-slate-900/60 dark:border-slate-800 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Barangays</span>
+            <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+          </div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 font-mono">
+              {statusCounts.total}
+            </span>
+            <span className="text-xs text-slate-500">Iloilo City</span>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl border border-emerald-200/60 bg-white dark:bg-slate-900/60 dark:border-slate-800 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-emerald-800 dark:text-emerald-400">Normal Supply</span>
+            <Droplet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-2xl font-bold tracking-tight text-emerald-700 dark:text-emerald-300 font-mono">
+              {statusCounts.normal}
+            </span>
+            <span className="text-xs text-slate-500">
+              {statusCounts.total > 0 ? Math.round((statusCounts.normal / statusCounts.total) * 100) : 0}% of city
+            </span>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl border border-amber-200/60 bg-white dark:bg-slate-900/60 dark:border-slate-800 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-amber-800 dark:text-amber-400">Low / Intermittent</span>
+            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-2xl font-bold tracking-tight text-amber-700 dark:text-amber-300 font-mono">
+              {statusCounts.intermittent}
+            </span>
+            <span className="text-xs text-slate-500">rotational</span>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl border border-rose-200/60 bg-white dark:bg-slate-900/60 dark:border-slate-800 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-rose-800 dark:text-rose-400">Critical Dry</span>
+            <AlertOctagon className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+          </div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-2xl font-bold tracking-tight text-rose-700 dark:text-rose-300 font-mono">
+              {statusCounts.dry}
+            </span>
+            <span className="text-xs text-rose-600 dark:text-rose-400 font-medium">relief priority</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Search, Filter Bar, and View Mode Toggle */}
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between p-3.5 rounded-xl border border-slate-200/80 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-xs">
+        {/* Search */}
         <div className="relative flex-1">
-          <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search barangay or district..."
-            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+            placeholder="Search barangay, district, or code..."
+            className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
             aria-label="Search barangays"
           />
         </div>
 
-        {/* District Filter Dropdown */}
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-zinc-400 shrink-0" aria-hidden="true" />
-          <select
-            value={selectedDistrict}
-            onChange={(e) => setSelectedDistrict(e.target.value)}
-            className="text-sm py-2 px-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-            aria-label="Filter by district"
-          >
-            <option value="ALL">All Districts ({items.length})</option>
-            {districts.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
+          {/* District Dropdown */}
+          <div className="flex items-center gap-1.5">
+            <Filter className="w-3.5 h-3.5 text-slate-400 hidden sm:inline" aria-hidden="true" />
+            <select
+              value={selectedDistrict}
+              onChange={(e) => setSelectedDistrict(e.target.value)}
+              className="text-xs font-medium py-2 px-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500/40 cursor-pointer"
+              aria-label="Filter by district"
+            >
+              <option value="ALL">All Districts ({items.length})</option>
+              {districts.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* View Mode Toggle (Table / Card Grid) */}
+          <div className="flex items-center rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 bg-slate-50 dark:bg-slate-800/60">
+            <button
+              type="button"
+              onClick={() => setViewMode("table")}
+              title="Table view"
+              className={`p-1.5 rounded-md text-xs font-medium transition-colors ${
+                viewMode === "table"
+                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-xs"
+                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
+              }`}
+            >
+              <List className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("cards")}
+              title="Card view"
+              className={`p-1.5 rounded-md text-xs font-medium transition-colors ${
+                viewMode === "cards"
+                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-xs"
+                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Status Filter Badges */}
-      <div className="flex flex-wrap gap-2 text-xs">
+      {/* 4. Quick Status Filter Tabs */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
         <button
           onClick={() => setSelectedStatus("ALL")}
-          className={`px-3 py-1.5 rounded-lg border font-medium transition-colors ${
+          className={`px-3 py-1.5 rounded-lg border font-medium transition-colors whitespace-nowrap ${
             selectedStatus === "ALL"
-              ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100"
-              : "bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+              ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-900 dark:border-slate-100"
+              : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
           }`}
         >
-          All Barangays ({items.length})
+          All ({items.length})
         </button>
         <button
-          onClick={() => setSelectedStatus("SCHEDULED_SUPPLY")}
-          className={`px-3 py-1.5 rounded-lg border font-medium transition-colors ${
-            selectedStatus === "SCHEDULED_SUPPLY"
+          onClick={() => setSelectedStatus("normal")}
+          className={`px-3 py-1.5 rounded-lg border font-medium transition-colors whitespace-nowrap ${
+            selectedStatus === "normal"
               ? "bg-emerald-600 text-white border-emerald-600"
-              : "bg-white dark:bg-zinc-900 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/60 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+              : "bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/60 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
           }`}
         >
-          💧 Flowing
+          Normal Supply ({statusCounts.normal})
         </button>
         <button
-          onClick={() => setSelectedStatus("DEGRADED_PRESSURE")}
-          className={`px-3 py-1.5 rounded-lg border font-medium transition-colors ${
-            selectedStatus === "DEGRADED_PRESSURE"
+          onClick={() => setSelectedStatus("intermittent")}
+          className={`px-3 py-1.5 rounded-lg border font-medium transition-colors whitespace-nowrap ${
+            selectedStatus === "intermittent"
               ? "bg-amber-600 text-white border-amber-600"
-              : "bg-white dark:bg-zinc-900 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900/60 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+              : "bg-white dark:bg-slate-900 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900/60 hover:bg-amber-50 dark:hover:bg-amber-950/30"
           }`}
         >
-          ⚠️ Low Pressure
+          Low / Intermittent ({statusCounts.intermittent})
         </button>
         <button
-          onClick={() => setSelectedStatus("CRITICAL_DRY")}
-          className={`px-3 py-1.5 rounded-lg border font-medium transition-colors ${
-            selectedStatus === "CRITICAL_DRY"
-              ? "bg-red-600 text-white border-red-600"
-              : "bg-white dark:bg-zinc-900 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900/60 hover:bg-red-50 dark:hover:bg-red-950/30"
+          onClick={() => setSelectedStatus("dry")}
+          className={`px-3 py-1.5 rounded-lg border font-medium transition-colors whitespace-nowrap ${
+            selectedStatus === "dry"
+              ? "bg-rose-600 text-white border-rose-600"
+              : "bg-white dark:bg-slate-900 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-900/60 hover:bg-rose-50 dark:hover:bg-rose-950/30"
           }`}
         >
-          🚫 Critical Dry
-        </button>
-        <button
-          onClick={() => setSelectedStatus("NORMAL_STANDBY")}
-          className={`px-3 py-1.5 rounded-lg border font-medium transition-colors ${
-            selectedStatus === "NORMAL_STANDBY"
-              ? "bg-blue-600 text-white border-blue-600"
-              : "bg-white dark:bg-zinc-900 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-900/60 hover:bg-blue-50 dark:hover:bg-blue-950/30"
-          }`}
-        >
-          ℹ️ Standby
+          Critical Dry ({statusCounts.dry})
         </button>
       </div>
 
-      {/* Barangay Cards Grid */}
+      {/* 5. Main Content: Table View vs. Card Grid */}
       {filteredItems.length === 0 ? (
-        <div className="p-12 text-center bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
-          <HelpCircle className="w-10 h-10 text-zinc-400 mx-auto mb-3" />
-          <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">No matching barangays found</p>
-          <p className="text-xs text-zinc-500 mt-1">Try clearing search filters or selecting another district.</p>
+        <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+          <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">No matching barangays found</p>
+          <p className="text-xs text-slate-500 mt-1">Try clearing your search query or selecting &quot;All Districts&quot;.</p>
+        </div>
+      ) : viewMode === "table" ? (
+        /* TABLE VIEW (Calm Data Density) */
+        <div className="rounded-xl border border-slate-200/80 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden shadow-xs">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 uppercase tracking-wider font-semibold text-[11px]">
+                  <th scope="col" className="py-3 px-4">Barangay</th>
+                  <th scope="col" className="py-3 px-4">District</th>
+                  <th scope="col" className="py-3 px-4">Current Status</th>
+                  <th scope="col" className="py-3 px-4 text-right">Gauge Pressure</th>
+                  <th scope="col" className="py-3 px-4">Active Schedule</th>
+                  <th scope="col" className="py-3 px-4 text-center">Incidents</th>
+                  <th scope="col" className="py-3 px-4 text-right">Telemetry As Of</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-normal">
+                {filteredItems.map((item) => (
+                  <tr
+                    key={item.barangay_id}
+                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
+                  >
+                    <td className="py-3 px-4 font-semibold text-slate-900 dark:text-slate-100">
+                      <div className="flex items-center gap-1.5">
+                        <span>{item.barangay_name}</span>
+                        {item.is_simulated && (
+                          <span
+                            title="Simulated Data (Rule WR12)"
+                            className="inline-flex px-1.5 py-0.2 rounded text-[10px] font-medium bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300"
+                          >
+                            SIM
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-slate-500 dark:text-slate-400">
+                      {item.district_name}
+                    </td>
+                    <td className="py-3 px-4">
+                      <StatusBadge status={item.current_status} isStale={item.is_stale} />
+                    </td>
+                    <td className="py-3 px-4 text-right font-mono font-medium text-slate-800 dark:text-slate-200">
+                      {item.latest_psi !== null && item.latest_psi !== undefined
+                        ? `${Number(item.latest_psi).toFixed(1)} PSI`
+                        : <span className="text-slate-400 font-sans text-xs">—</span>}
+                    </td>
+                    <td className="py-3 px-4 text-slate-600 dark:text-slate-300 text-xs">
+                      {item.current_window_end ? (
+                        <span className="text-emerald-700 dark:text-emerald-400 font-medium">
+                          Active until {formatManilaTime(item.current_window_end)}
+                        </span>
+                      ) : item.next_window_start ? (
+                        <span className="text-sky-700 dark:text-sky-400">
+                          Next: {formatManilaTime(item.next_window_start)}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400">Standard rotational</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      {item.active_incident_clusters > 0 ? (
+                        <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300">
+                          {item.active_incident_clusters}
+                        </span>
+                      ) : (
+                        <span className="text-slate-300 dark:text-slate-600">0</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-right font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                      {formatManilaTime(item.as_of)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
+        /* CARD GRID VIEW */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredItems.map((item) => (
             <div
               key={item.barangay_id}
-              className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-xs flex flex-col justify-between hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
+              className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
             >
               <div>
-                {/* Header: Name and District */}
-                <div className="flex items-start justify-between gap-2 mb-3">
+                <div className="flex items-start justify-between gap-2 mb-2.5">
                   <div>
-                    <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-50 leading-tight">
+                    <h3 className="font-semibold text-base text-slate-900 dark:text-slate-50 leading-tight">
                       {item.barangay_name}
                     </h3>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{item.district_name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{item.district_name}</p>
                   </div>
-                  {renderStatusBadge(item.current_status, item.is_stale)}
+                  <StatusBadge status={item.current_status} isStale={item.is_stale} />
                 </div>
 
-                {/* Telemetry and Metrics */}
-                <div className="space-y-2 py-3 my-2 border-y border-zinc-100 dark:border-zinc-800/80 text-xs">
-                  {/* Gauge Pressure */}
+                <div className="space-y-2 py-2.5 my-2 border-y border-slate-100 dark:border-slate-800 text-xs">
                   <div className="flex items-center justify-between">
-                    <span className="text-zinc-500">Gauge Pressure:</span>
-                    <span className="font-mono font-semibold text-zinc-800 dark:text-zinc-200">
+                    <span className="text-slate-500">Gauge Pressure:</span>
+                    <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">
                       {item.latest_psi !== null && item.latest_psi !== undefined
                         ? `${Number(item.latest_psi).toFixed(1)} PSI`
                         : "No reading"}
                     </span>
                   </div>
 
-                  {/* Supply Windows */}
                   {item.current_window_end && (
                     <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400">
-                      <span>Active Supply Window:</span>
-                      <span className="font-mono font-medium">Until {formatManilaTime(item.current_window_end)}</span>
-                    </div>
-                  )}
-                  {item.next_window_start && (
-                    <div className="flex items-center justify-between text-blue-700 dark:text-blue-400">
-                      <span>Next Window:</span>
-                      <span className="font-mono font-medium">{formatManilaTime(item.next_window_start)}</span>
+                      <span>Supply Window:</span>
+                      <span className="font-medium">Until {formatManilaTime(item.current_window_end)}</span>
                     </div>
                   )}
 
-                  {/* Active Reports / Incidents */}
                   {item.active_incident_clusters > 0 && (
-                    <div className="flex items-center justify-between text-red-700 dark:text-red-400">
-                      <span>Active Citizen Reports:</span>
-                      <span className="font-semibold">{item.active_incident_clusters} cluster(s)</span>
+                    <div className="flex items-center justify-between text-rose-700 dark:text-rose-400">
+                      <span>Outage Clusters:</span>
+                      <span className="font-semibold">{item.active_incident_clusters} active</span>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Card Footer: As-Of Timestamp & Source Tag */}
-              <div className="pt-2 flex flex-col gap-1.5 text-[11px] text-zinc-400">
-                <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1 font-mono">
-                    <Clock className="w-3 h-3 text-zinc-400" />
-                    As of: {formatManilaTime(item.as_of)}
+              <div className="pt-2 flex items-center justify-between text-[11px] text-slate-400">
+                <span className="inline-flex items-center gap-1 font-mono">
+                  <Clock className="w-3 h-3 text-slate-400" />
+                  {formatManilaTime(item.as_of)}
+                </span>
+                {item.is_simulated && (
+                  <span className="text-[10px] font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950 px-1.5 py-0.2 rounded border border-purple-200 dark:border-purple-800">
+                    Simulated
                   </span>
-                  {item.is_simulated && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-900/60">
-                      <ShieldAlert className="w-2.5 h-2.5" />
-                      Simulated
-                    </span>
-                  )}
-                </div>
+                )}
               </div>
             </div>
           ))}
         </div>
       )}
+
+      {/* 6. Citizen Report CTA Banner */}
+      <div className="p-4 sm:p-5 rounded-xl border border-sky-200/80 bg-sky-50/70 dark:bg-sky-950/20 dark:border-sky-900/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h4 className="text-sm font-semibold text-sky-950 dark:text-sky-100">
+            Is your barangay experiencing an unlisted water outage?
+          </h4>
+          <p className="text-xs text-sky-800/90 dark:text-sky-300/90 mt-0.5">
+            Help the community and emergency triage by filing an anonymous report. Verified reports escalate directly to CDRRMO tankers.
+          </p>
+        </div>
+        <Link
+          href="/report"
+          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-sky-600 hover:bg-sky-700 text-white shadow-xs transition-colors whitespace-nowrap shrink-0"
+        >
+          <span>Submit Report (30s)</span>
+          <ExternalLink className="w-3.5 h-3.5" />
+        </Link>
+      </div>
     </div>
   )
 }
-

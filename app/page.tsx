@@ -2,7 +2,8 @@ import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { BarangayStatusBoard, BarangayStatusItem } from '@/components/status/BarangayStatusBoard'
-import { Droplet, AlertTriangle, FileText, Lock, PlusCircle, BarChart3 } from 'lucide-react'
+import { PublicHeader } from '@/components/layout/PublicHeader'
+import { Droplet, AlertTriangle, ShieldCheck } from 'lucide-react'
 
 export const instant = false
 
@@ -14,15 +15,15 @@ export default async function HomePage() {
 
   if (!supabaseUrl || !supabaseKey) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-zinc-50 dark:bg-zinc-950 font-sans">
-        <div className="max-w-md w-full p-6 bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 text-center">
+      <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-slate-50 dark:bg-slate-950 font-sans">
+        <div className="max-w-md w-full p-6 bg-white dark:bg-slate-900 rounded-xl shadow-xs border border-slate-200 dark:border-slate-800 text-center">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-950/50 text-amber-600 mb-4 text-xl">
             ⚠️
           </div>
-          <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
-            Supabase Credentials Required
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">
+            Supabase Connection Pending
           </h1>
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
             Configure your environment variables in Vercel or local <code>.env.local</code> to connect to the live database.
           </p>
         </div>
@@ -33,13 +34,13 @@ export default async function HomePage() {
   const cookieStore = await cookies()
   const supabase = createClient(cookieStore)
 
-  // 1. Fetch live barangay statuses from view
+  // 1. Fetch live barangay statuses from security-invoker view
   const { data: statusRows } = await supabase
     .from('v_public_barangay_status')
     .select('*')
     .order('barangay_name')
 
-  // 2. Fetch latest pressure readings to derive accurate as_of and gauge pressure
+  // 2. Fetch latest pressure readings
   const { data: readings } = await supabase
     .from('pressure_readings')
     .select('barangay_id, pressure_psi, recorded_at, source, is_simulated')
@@ -100,70 +101,23 @@ export default async function HomePage() {
   })
 
   return (
-    <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 font-sans flex flex-col">
-      {/* Top Header & Navigation */}
-      <header className="sticky top-0 z-40 w-full border-b border-zinc-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-xs">
-              <Droplet className="w-5 h-5 fill-current" />
-            </div>
-            <div>
-              <span className="font-extrabold text-base tracking-tight text-zinc-900 dark:text-zinc-50">
-                OWTA
-              </span>
-              <span className="hidden sm:inline text-xs text-zinc-400 dark:text-zinc-500 ml-2 font-medium">
-                Iloilo Water Transparency
-              </span>
-            </div>
-          </Link>
-
-          {/* Header Action Buttons */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Link
-              href="/report"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-colors"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>Report Outage</span>
-            </Link>
-
-            <Link
-              href="/index"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 transition-colors"
-            >
-              <BarChart3 className="w-3.5 h-3.5 text-blue-600" />
-              <span className="hidden sm:inline">Delivery Index</span>
-            </Link>
-
-            <Link
-              href="/methodology"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 transition-colors"
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Methodology</span>
-            </Link>
-
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-            >
-              <Lock className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Staff</span>
-            </Link>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 font-sans flex flex-col">
+      {/* Universal Public Navigation Header */}
+      <PublicHeader />
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
         {/* Hero Section */}
-        <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-zinc-50 tracking-tight">
-            Iloilo City Water Transparency
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-800 border border-sky-200/60 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/60">
+            <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse"></span>
+            <span>Live Municipal Telemetry Board</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-50 tracking-tight">
+            Iloilo City Water Status & Transparency
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 max-w-2xl leading-relaxed">
-            Real-time public status board and telemetry-verified delivery index across Mandurriao and participating water districts. Every figure backed by sensor timestamps.
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed">
+            Real-time public status board and delivery index across Mandurriao and participating water districts. Every metric backed by transparent field readings and citizen report clustering.
           </p>
         </div>
 
@@ -175,22 +129,28 @@ export default async function HomePage() {
         />
       </main>
 
-      {/* Footer & Privacy Notice (RA 10173) */}
-      <footer className="mt-auto border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 py-6 text-xs text-zinc-500 dark:text-zinc-400">
+      {/* Footer & Privacy Notice (RA 10173 & WR07) */}
+      <footer className="mt-auto border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-6 text-xs text-slate-500 dark:text-slate-400">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>
-            © 2026 OWTA — Open Water Transparency Architecture. Neutral, evidence-first civic water accounting.
-          </p>
-          <div className="flex items-center gap-4">
-            <Link href="/index" className="hover:underline">
+          <div className="flex items-center gap-2">
+            <Droplet className="w-4 h-4 text-sky-600" />
+            <p>
+              © 2026 OWTA — Open Water Transparency Architecture. Neutral, evidence-first civic water accounting.
+            </p>
+          </div>
+          <div className="flex items-center gap-4 text-xs">
+            <Link href="/index" className="hover:text-slate-900 dark:hover:text-slate-200 hover:underline">
               Weekly Delivery Index
             </Link>
             <span>•</span>
-            <Link href="/methodology" className="hover:underline">
-              Delivery Index Method
+            <Link href="/methodology" className="hover:text-slate-900 dark:hover:text-slate-200 hover:underline">
+              Methodology
             </Link>
             <span>•</span>
-            <span title="Compliant with Republic Act No. 10173">RA 10173 Privacy Protected</span>
+            <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500" title="Compliant with Republic Act No. 10173">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              RA 10173 Privacy Protected
+            </span>
           </div>
         </div>
       </footer>

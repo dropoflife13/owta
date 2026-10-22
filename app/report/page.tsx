@@ -2,7 +2,8 @@ import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { CitizenReportForm, BarangayOption } from '@/components/forms/CitizenReportForm'
-import { ArrowLeft, Droplet } from 'lucide-react'
+import { PublicHeader } from '@/components/layout/PublicHeader'
+import { ArrowLeft, Droplet, ShieldCheck } from 'lucide-react'
 
 export const instant = false
 
@@ -24,67 +25,43 @@ export default async function ReportPage() {
   }))
 
   return (
-    <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 font-sans flex flex-col">
-      {/* Top Header */}
-      <header className="sticky top-0 z-40 w-full border-b border-zinc-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Status Board</span>
-          </Link>
-
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center text-white">
-              <Droplet className="w-4 h-4 fill-current" />
-            </div>
-            <span className="font-extrabold text-sm tracking-tight text-zinc-900 dark:text-zinc-100">
-              OWTA Report Desk
-            </span>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 font-sans flex flex-col">
+      {/* Universal Public Navigation Header */}
+      <PublicHeader />
 
       {/* Main Content */}
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
-        <div className="max-w-xl mx-auto text-center space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+        <div className="max-w-xl mx-auto text-center space-y-1.5">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-800 border border-sky-200/60 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/60">
+            <span>Anonymous Citizen Ingestion</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
             Citizen Outage Report
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-            Reports are automatically clustered within 200m to inform Barangay Officials and CDRRMO dispatchers.
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+            Reports are spatial-clustered within 200m to alert Barangay Officials and prioritize CDRRMO relief tankers. No account required.
           </p>
         </div>
 
-        {/* Citizen Report Form */}
+        {/* Citizen Report Form Component */}
         <CitizenReportForm barangays={barangayOptions} />
-
-        {/* Rules & Privacy Callout */}
-        <div className="max-w-xl mx-auto p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs text-zinc-500 space-y-2">
-          <p className="font-semibold text-zinc-700 dark:text-zinc-300">How OWTA Handles Outage Reports:</p>
-          <ul className="list-disc pl-4 space-y-1 text-[11px] leading-relaxed">
-            <li>
-              <strong>Automated Spatiotemporal Clustering (Rule WR05):</strong> Multiple reports within 200m and 3 hours are merged into one incident cluster, incrementing the public severity count.
-            </li>
-            <li>
-              <strong>Zero Public Coordinates or PII (Rule WR07):</strong> Your phone number, landmark text, and exact coordinates are strictly hidden from public views.
-            </li>
-            <li>
-              <strong>Rate Limiting (Rule WR04):</strong> Submissions are rate-limited to 3 reports per device per hour to protect against false incident flooding.
-            </li>
-          </ul>
-        </div>
       </main>
 
-      {/* Footer */}
-      <footer className="mt-auto border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 py-6 text-xs text-center text-zinc-400">
-        <div className="max-w-4xl mx-auto px-4">
-          Protected by Cloudflare Turnstile & Salted Device Fingerprinting • Compliant with RA 10173
+      {/* Footer & Privacy Notice (RA 10173) */}
+      <footer className="mt-auto border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-6 text-xs text-slate-500 dark:text-slate-400">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p>© 2026 OWTA — Philippine Data Privacy Act of 2012 (RA 10173) Compliant</p>
+          <div className="flex items-center gap-4">
+            <Link href="/" className="hover:text-slate-900 dark:hover:text-slate-200 hover:underline">
+              Status Board
+            </Link>
+            <span>•</span>
+            <Link href="/methodology" className="hover:text-slate-900 dark:hover:text-slate-200 hover:underline">
+              Clustering Rules
+            </Link>
+          </div>
         </div>
       </footer>
     </div>
   )
 }
-

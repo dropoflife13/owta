@@ -12,7 +12,10 @@ import {
   HelpCircle,
   Truck,
   RotateCcw,
+  Copy,
+  ExternalLink,
 } from 'lucide-react'
+import { PublicHeader } from '@/components/layout/PublicHeader'
 
 export const instant = false
 
@@ -56,161 +59,213 @@ export default async function TicketPage({ params }: TicketPageProps) {
     switch (s) {
       case 'verified':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>Verified by Barangay</span>
           </span>
         )
       case 'dispatched':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
-            <Truck className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-800 border border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/60">
+            <Truck className="w-4 h-4 text-sky-600 dark:text-sky-400" />
             <span>Relief Tanker Dispatched</span>
           </span>
         )
       case 'resolved':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-300 dark:border-blue-800">
-            <Droplet className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60">
+            <Droplet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>Water Service Restored</span>
           </span>
         )
       case 'rejected':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700">
-            <RotateCcw className="w-4 h-4 text-zinc-500" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700">
+            <RotateCcw className="w-4 h-4 text-slate-500" />
             <span>Closed / Unverified</span>
           </span>
         )
       case 'submitted':
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60">
             <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-            <span>Submitted — Queued for Triage</span>
+            <span>Queued for Field Triage</span>
           </span>
         )
     }
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 font-sans flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-40 w-full border-b border-zinc-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Status Board</span>
-          </Link>
+    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 font-sans flex flex-col">
+      {/* Universal Public Navigation Header */}
+      <PublicHeader />
 
-          <Link href="/report" className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">
-            Report Another Outage
-          </Link>
-        </div>
-      </header>
+      {/* Main Content */}
+      <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
+        <Link
+          href="/report"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Submit another report</span>
+        </Link>
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
-        {!ticket || ticket.found === false ? (
-          /* TICKET NOT FOUND STATE */
-          <div className="bg-white dark:bg-zinc-900 p-8 rounded-2xl border border-zinc-200 dark:border-zinc-800 text-center space-y-4 shadow-sm">
-            <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 mx-auto">
-              <HelpCircle className="w-6 h-6" />
-            </div>
-            <div className="space-y-1">
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">Ticket Not Found</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                No incident report was found with token <code className="font-mono font-bold text-zinc-700 dark:text-zinc-300">{ticketToken}</code>.
-              </p>
-            </div>
+        {error || !ticket ? (
+          <div className="bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-xs text-center space-y-3">
+            <HelpCircle className="w-12 h-12 text-slate-400 mx-auto" />
+            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              Ticket Not Found
+            </h1>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              We could not find an incident report matching code <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{ticketToken}</span>.
+              Please verify your reference token and try again.
+            </p>
             <div className="pt-2">
               <Link
                 href="/report"
-                className="inline-flex items-center justify-center py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-xs"
+                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-sky-600 hover:bg-sky-700 text-white shadow-xs transition-colors"
               >
-                Return to Report Desk
+                Return to Reporting Desk
               </Link>
             </div>
           </div>
         ) : (
-          /* TICKET FOUND STATE */
-          <div className="bg-white dark:bg-zinc-900 p-6 sm:p-8 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-6">
-            {/* Header Token & Status */}
-            <div className="space-y-3 pb-5 border-b border-zinc-100 dark:border-zinc-800">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-6">
+            {/* Ticket Header Card */}
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-                    Incident Reference Token
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Incident Tracking Code
                   </span>
-                  <p className="font-mono text-2xl font-black text-zinc-900 dark:text-zinc-50 tracking-wider">
-                    {ticket.ticket_token}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <h1 className="text-2xl font-black font-mono tracking-tight text-slate-900 dark:text-slate-50">
+                      {ticket.ticket_token}
+                    </h1>
+                  </div>
                 </div>
                 <div>{renderStatusBadge(ticket.status)}</div>
               </div>
+
+              {/* Progress Stepper */}
+              <div className="py-2">
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-3">
+                  Resolution Lifecycle
+                </span>
+                <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                  <div className="space-y-1.5">
+                    <div className="h-1.5 rounded-full bg-emerald-500"></div>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-[11px]">1. Received</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    <div
+                      className={`h-1.5 rounded-full ${
+                        ticket.cluster_count > 0 ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-800'
+                      }`}
+                    ></div>
+                    <span
+                      className={`text-[11px] ${
+                        ticket.cluster_count > 0 ? 'font-semibold text-slate-800 dark:text-slate-200' : 'text-slate-400'
+                      }`}
+                    >
+                      2. Clustered ({ticket.cluster_count || 1})
+                    </span>
+                  </div>
+                  <div className="space-y-1.5">
+                    <div
+                      className={`h-1.5 rounded-full ${
+                        ticket.status === 'verified' || ticket.status === 'dispatched' || ticket.status === 'resolved'
+                          ? 'bg-emerald-500'
+                          : 'bg-slate-200 dark:bg-slate-800'
+                      }`}
+                    ></div>
+                    <span
+                      className={`text-[11px] ${
+                        ticket.status === 'verified' || ticket.status === 'dispatched' || ticket.status === 'resolved'
+                          ? 'font-semibold text-slate-800 dark:text-slate-200'
+                          : 'text-slate-400'
+                      }`}
+                    >
+                      3. Verified
+                    </span>
+                  </div>
+                  <div className="space-y-1.5">
+                    <div
+                      className={`h-1.5 rounded-full ${
+                        ticket.status === 'resolved' ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-800'
+                      }`}
+                    ></div>
+                    <span
+                      className={`text-[11px] ${
+                        ticket.status === 'resolved' ? 'font-semibold text-slate-800 dark:text-slate-200' : 'text-slate-400'
+                      }`}
+                    >
+                      4. Restored
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Details Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
+                <div>
+                  <span className="text-slate-500">Jurisdiction:</span>
+                  <p className="font-semibold text-slate-900 dark:text-slate-100 mt-0.5">
+                    {ticket.barangay_name} ({ticket.district_name})
+                  </p>
+                </div>
+                <div>
+                  <span className="text-slate-500">Incident Category:</span>
+                  <p className="font-semibold text-slate-900 dark:text-slate-100 mt-0.5 uppercase tracking-wide">
+                    {ticket.category.replace('_', ' ')}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-slate-500">First Reported:</span>
+                  <p className="font-mono text-slate-800 dark:text-slate-200 mt-0.5">
+                    {formatTime(ticket.created_at)}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-slate-500">Barangay Verification:</span>
+                  <p className="font-mono text-slate-800 dark:text-slate-200 mt-0.5">
+                    {formatTime(ticket.verified_at)}
+                  </p>
+                </div>
+              </div>
+
+              {ticket.landmark && (
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
+                  <span className="text-slate-500">Reported Landmark:</span>
+                  <p className="font-medium text-slate-800 dark:text-slate-200 mt-0.5">{ticket.landmark}</p>
+                </div>
+              )}
             </div>
 
-            {/* Details Grid */}
-            <div className="grid grid-cols-2 gap-4 text-xs">
-              <div className="space-y-1">
-                <span className="text-zinc-400">Barangay:</span>
-                <p className="font-bold text-zinc-800 dark:text-zinc-200 flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-zinc-400" />
-                  {ticket.barangay}
-                </p>
+            {/* Statutory Privacy & Transparency Note */}
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-500 space-y-1">
+              <div className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-300">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <span>Statutory Data Privacy Disclosure (RA 10173 & Rule WR07)</span>
               </div>
-
-              <div className="space-y-1">
-                <span className="text-zinc-400">District:</span>
-                <p className="font-bold text-zinc-800 dark:text-zinc-200">{ticket.district || 'Iloilo City'}</p>
-              </div>
-
-              <div className="space-y-1">
-                <span className="text-zinc-400">Report Category:</span>
-                <p className="font-semibold text-zinc-800 dark:text-zinc-200 capitalize">
-                  {ticket.category ? ticket.category.replace('_', ' ') : 'Outage'}
-                </p>
-              </div>
-
-              <div className="space-y-1">
-                <span className="text-zinc-400">Submitted At:</span>
-                <p className="font-mono text-zinc-700 dark:text-zinc-300">{formatTime(ticket.submitted_at)}</p>
-              </div>
-            </div>
-
-            {/* Privacy Shield Notice (Rule WR07) */}
-            <div className="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/60 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-300 text-xs flex items-start gap-2.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold">Privacy Shield Active (Rule WR07)</p>
-                <p className="text-[11px] text-emerald-800 dark:text-emerald-400 mt-0.5 leading-relaxed">
-                  Specific street landmarks, coordinates, and contact details are shielded from public tracking URLs to prevent citizen doxxing under RA 10173. Authorized Barangay Officials access localized details on their authenticated triage portal.
-                </p>
-              </div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="pt-2 flex flex-col sm:flex-row gap-2">
-              <Link
-                href="/"
-                className="flex-1 py-2.5 px-4 text-center rounded-xl text-xs font-semibold border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition-colors"
-              >
-                Back to Status Board
-              </Link>
-              <Link
-                href="/report"
-                className="flex-1 py-2.5 px-4 text-center rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-xs"
-              >
-                Submit Another Report
-              </Link>
+              <p className="leading-relaxed">
+                OWTA does not expose reporter phone numbers, personal identifiers, or exact household coordinates. This status view is accessible exclusively via your random reference token.
+              </p>
             </div>
           </div>
         )}
       </main>
+
+      {/* Footer */}
+      <footer className="mt-auto border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-6 text-xs text-slate-500 dark:text-slate-400">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 flex items-center justify-between">
+          <p>© 2026 OWTA Iloilo</p>
+          <Link href="/" className="hover:underline">
+            View Citywide Status Board
+          </Link>
+        </div>
+      </footer>
     </div>
   )
 }
-
