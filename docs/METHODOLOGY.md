@@ -1,79 +1,79 @@
-# OWTA: Methodology
+# OWTA: Methodology & Mathematical Specification
 
-Rules and formulas for status, relief priority, report grouping, and the weekly delivery index. Open this file when a task touches any of them. The schema and views are in `DATA_MODEL.md`.
+Rules and formulas for status derivation, emergency relief priority, report clustering, and the Weekly Water Delivery Index.
 
-The methodology page must publish the index method before any index is shown.
+The public methodology page (`/methodology`) publishes this specification openly to ensure transparency and accountability.
 
-## Parameters
+---
 
-Values marked [A] are assumptions to confirm with the team and pilot barangays. Read them from `index_methodologies` (or app configuration where noted). Never hard-code them.
+## 1. Parameter Specifications
 
-| Parameter | Default | Where it lives |
+Methodology parameters are managed in `methodology_parameters`. Any change creates a new version; previous versions and calculated snapshots are immutable.
+
+| Parameter | Default | Definition & Table |
 |---|---|---|
-| `min_psi` | 5 [A] | `index_methodologies` |
-| `stale_after_minutes` | 360 [A] | `index_methodologies` |
-| `relief_dry_hours` | 48 [A] | `index_methodologies` |
-| `min_coverage` | 0.70 [A] | `index_methodologies` |
-| Report grouping radius | 300 m [A] | app configuration |
-| Report grouping window | 6 h [A] | app configuration |
+| `min_pressure_threshold` | 7.00 PSI (or 5.00 PSI) | Minimum hydraulic pressure for delivered water (`methodology_parameters`) |
+| `stale_after_minutes` | 360 min (6 hours) | Time after which absent telemetry resolves to `unknown` |
+| `relief_dry_hours` | 48 hours | Consecutive dry duration required to enter relief queue (`WR06, WR10`) |
+| `min_coverage_floor` | 0.70 (70%) | Minimum valid telemetry coverage required to compute an index score (`WR04`) |
+| `epoch_minutes` | 15 min | Time bucket for discrete pressure aggregation |
+| Report clustering radius | 200 meters | Spatiotemporal proximity radius in `submit_report()` (`WR05`) |
+| Report clustering window | 3 hours | Temporal window for incident grouping in `submit_report()` (`WR05`) |
 
-A change to any methodology parameter is a new `index_methodologies` version. Old versions and their snapshots are never edited.
+---
 
-## Status (WR02, WR03)
+## 2. Real-Time Status Derivation (WR02, WR03)
 
-Status is derived per DMA from the latest reading at each active pressure monitoring point (`v_point_latest`).
+Current status derives per DMA from the latest readings across active pressure monitoring points (`monitoring_points`, `pressure_readings`):
 
-| Condition | DMA status |
+| Telemetry Condition | Computed Status |
 |---|---|
-| No reading, or newest reading older than `stale_after_minutes` | `unknown` |
-| Average of latest readings equals 0 | `dry` |
-| Average below `min_psi` | `low` |
-| Otherwise | `flowing` |
+| No reading, or newest reading older than 360 min (`stale_after_minutes`) | `unknown` (triggers stale warning banner) |
+| Gauge pressure reading equals 0.00 PSI | `dry` |
+| Pressure above 0 but below `min_pressure_threshold` | `low_pressure` |
+| Pressure at or above `min_pressure_threshold` | `flowing` |
 
-A barangay shows its worst status across the DMAs that serve it: `dry`, then `low`, then `flowing` only if every serving DMA is `flowing`, otherwise `unknown`.
+**Barangay Roll-up:** A barangay reflects its worst status across serving DMAs (`dry` $\rightarrow$ `low_pressure` $\rightarrow$ `flowing` only if every serving DMA is flowing, otherwise `unknown`). Every public status badge shows its source and as-of time.
 
-Every public status shows its source and as-of time. When data is older than the stale threshold, show a stale-data banner and `unknown`, never `flowing`.
+---
 
-## Relief priority (WR06)
+## 3. Emergency Relief Priority (WR06, WR10)
 
-- Dry hours per DMA is the time since the last reading above 0 PSI at any active pressure point. If no reading above 0 exists, it is the time since the first reading.
-- A barangay enters the relief list when a serving DMA has status `dry` and dry hours at or above `relief_dry_hours`.
-- A DMA with `unknown` status never triggers relief.
-- The list is ordered by dry hours, highest first. It is visible to staff only.
+1. **Continuous Dry Duration:** Elapsed dry hours per DMA is computed from the time since the last reading above 0 PSI.
+2. **Elevation Threshold:** A barangay enters the priority queue (`v_relief_priority_queue`) strictly when serving DMA status is `dry` and consecutive dry duration reaches or exceeds 48 hours (`WR06, WR10`).
+3. **Fail-Safe Integrity:** Telemetry with `unknown` or stale status **never** triggers relief.
+4. **Strict Ordering:** The relief matrix is ordered by dry hours descending (highest first) for evidence-based municipal resource allocation.
 
-## Report grouping (WR05)
+---
 
-A new report joins an existing group when all hold:
-- Same barangay and same report type.
-- Group status is `open`, `verified`, or `dispatched`.
-- Group's last report is within the grouping window.
-- Within the grouping radius of the group's center, or either location is missing.
+## 4. Spatiotemporal Report Clustering (WR05, WR07)
 
-Otherwise it starts a new group. Members are kept and the group count is public. The public sees groups only through `v_public_report_groups`.
+When a citizen submits an outage report via `submit_report()`:
+1. The system checks active clusters (`report_clusters`) in the same barangay and category within 200 meters and 3 hours (`ST_DWithin`).
+2. If a matching cluster exists, the report is joined, the cluster center is updated as a running centroid, and `report_count` is incremented.
+3. If no matching cluster exists, a new cluster is created.
+4. An unguessable 8-character `ticket_token` is generated for citizen tracking (`get_ticket_status()`) without leaking exact coordinates or personal phone numbers (`WR07`).
 
-## Delivery index, version 1 (WR04, WR12)
+---
 
-1. **Week.** Monday 00:00 to the next Monday 00:00 in Asia/Manila.
-2. **Promised windows.** Published, non-superseded schedule rows that overlap the week with flow type `full` or `low`. `shut` windows are not promised supply.
-3. **Promised hours.** Total length of promised windows inside the week.
-4. **Held readings.** Each reading holds until the next reading or the stale limit, whichever comes first.
-5. **Delivered moment.** A moment inside a promised window counts as delivered when the DMA average of held readings is at least `min_psi`.
-6. **Delivered hours.** Total length of delivered moments inside promised windows.
-7. **Coverage.** Promised hours that have a held reading, divided by promised hours.
-8. **Index.** Delivered hours divided by promised hours. If coverage is below `min_coverage`, store `insufficient_data = true` and show no percentage.
-9. **Barangay roll-up.** Blend the DMA results weighted by `coverage_pct` in `barangay_dma` [A].
-10. **Exclusions.** Simulated readings and schedules are excluded unless the demo flag is set.
-11. **History.** Snapshots are stored with the methodology version. A new version creates new rows and never edits old ones.
-12. **Display.** Always show promised hours, delivered hours, coverage, methodology version, and a link to this method.
+## 5. Delivery Index Calculation Engine (WR04, WR12)
 
-Mark insufficient data instead of guessing. Right-of-reply notes (`period_notes`, WR10) attach to a DMA and week and never change the numbers.
+Implemented in `compute_weekly_delivery_index()` and materialized in `weekly_delivery_indices` / `v_public_water_index`:
 
-## Jobs
+$$\text{Index} = \min\left(1.0, \frac{\text{Delivered Hours}}{\text{Promised Hours}}\right) \times 100\%$$
 
-- Weekly index: a SQL function computes snapshots weekly and on demand for the current week. It is a SQL function so it can be tested against fixtures.
-- Nightly retention purge of contact data (WR09).
-- Outbox drain (Phase 2): batches queued notifications through the SMS provider, retries up to a limit, then marks them failed. A daily send cap protects the SMS budget.
+1. **Evaluation Cycle:** 7-day Monday 00:00 to Monday 00:00 (Asia/Manila).
+2. **Promised Hours:** Cumulative duration of active published supply windows in `water_schedules` overlapping the cycle (`superseded_at IS NULL`).
+3. **Telemetry Epochs:** Evaluated in 15-minute discrete bins (`date_bin`) during scheduled windows.
+4. **Delivered Hours:** Count of 15-minute epochs where median observed pressure $\ge 7.00\text{ PSI}$ multiplied by $0.25\text{ h}$.
+5. **Coverage Ratio:** Observed valid epochs divided by total promised epochs.
+6. **Rule WR04 Suppression Floor:** If coverage ratio $< 0.70$ (70%), the delivery score is strictly suppressed (`delivery_index_score = NULL`) and assigned tier `DATA_DEFICIENT` ("Insufficient Data") to prevent misleading scores.
+7. **Rule WR12 Isolation:** Any reading where `is_simulated = TRUE` is strictly excluded from index calculations.
 
-## Test fixtures
-
-Cover at least: a stale DMA (`unknown`), a dry DMA past the relief threshold, a barangay served by multiple DMAs with mixed status, a week with insufficient coverage, a week with simulated readings (excluded), and a methodology version change that leaves old snapshots untouched.
+### Performance Tier Banding:
+- **`EXEMPLARY`**: $\ge 90.0\%$
+- **`SATISFACTORY`**: $75.0\% - 89.9\%$
+- **`DEGRADED`**: $50.0\% - 74.9\%$
+- **`CRITICAL_DEFICIT`**: $< 50.0\%$
+- **`DATA_DEFICIENT`**: Coverage $< 70.0\%$ (Rule WR04)
+- **`NO_SCHEDULED_HOURS`**: Promised hours $= 0$

@@ -32,8 +32,8 @@ Stance: neutral and evidence-first. The tool closes information gaps; it does no
 
 Rules:
 - Roles come only from `profiles.role`. The browser never supplies a role, and users cannot edit their own.
-- Staff accounts are inactive until an admin sets `verified_at`. Unverified staff behave as residents.
-- `barangay_official` scope is enforced by RLS through `profiles.barangay_id`.
+- Staff accounts are inactive until an admin sets `is_verified = TRUE`. Unverified staff behave as residents.
+- `barangay_official` scope is enforced by RLS through `profiles.assigned_barangay_id`.
 
 Capabilities:
 - Everyone views status, published schedules, and active advisories.
@@ -83,12 +83,11 @@ Three-minute demo flow (MVP gate):
 
 ## Security and privacy
 
-- RA 10173 applies: consent recorded, purpose limited, retention enforced, named privacy contact.
+- RA 10173 applies: consent recorded, purpose limited, retention enforced, named privacy contact (see `docs/PRIVACY.md`).
 - RLS enabled with explicit policies on every table. Tables with no policy are unreadable.
 - Anonymous writes: CAPTCHA, rate limits, and Zod validation.
-- Residents never insert into `citizen_reports` directly; they call `submit_report()` through a server route.
-- The audit log is append-only for every role. Do not attach the generic audit trigger to tables holding personal data.
-- Photos (Phase 2): private bucket, signed URLs, EXIF stripped.
+- Residents never insert into `water_reports` directly; they call `submit_report()` through a server route.
+- The audit log is append-only for every role (`audit_logs`).
 - Strict security headers including CSP.
 
 ## Data sources and trust labels
@@ -113,51 +112,24 @@ Values marked [A] are assumptions to confirm with the team and pilot barangays. 
 | Minimum PSI for flowing | 5 |
 | Relief dry hours | 48 |
 | Minimum coverage | 0.70 |
-| Report grouping | 300 m, 6 h |
-| Contact retention | N days (to be assigned) |
-
-Unverified, never stated as fact: number of DMAs, number of barangays, boundary source and license, utility telemetry, typical window times, SMS rates, RA 10173 registration duties. A barangay may be served by more than one DMA [A].
-
-## Stack and conventions
-
-- Next.js App Router, React, TypeScript strict. Match installed versions (Next.js 15, React 19).
-- Tailwind CSS and shadcn/ui with central design tokens. Recharts takes server-provided data only.
-- Map: MapLibre GL with a tile provider whose terms allow production use. City GeoJSON is a simplified static asset on the CDN (under 300 KB gzip [A]).
-- Zod at every boundary. `@supabase/supabase-js` and `@supabase/ssr`; types from `supabase gen types`.
-- Server Components by default; Client Components only for the map and forms. Shared UI components take props and never fetch data.
-- Server Actions for staff mutations. Route Handlers for public JSON, webhooks, health, cron, and device ingestion. A shared service layer in `lib/` keeps both consistent.
-- Public pages use ISR with on-demand revalidation on publish plus a short time-based fallback. Staff pages are server-rendered behind auth. Middleware role guards are a UX convenience; RLS is the authority.
-- Realtime only for staff dashboards (Phase 2). A static last-known snapshot is the fallback if the database is unreachable.
-- Jobs: pg_cron or Vercel Cron (confirm plan limits): weekly index, nightly retention purge, outbox drain.
-- Errors return `{ error, errorId, details }`. Status codes: 400 validation, 401 not signed in, 403 role or scope, 404 not found, 409 conflict, 429 rate limit with `Retry-After`, 500 unexpected.
-- Accessibility: WCAG 2.1 AA, status never by color alone, 44 px touch targets, responsive from 375 px. Plain language; a barangay status is reachable within 3 taps from landing.
-- UI strings externalized in `i18n/`. English at MVP; Filipino and Hiligaynon in Phase 2.
-- Performance: LCP under 2.5 s at p75 on a mid-range Android over 4G; initial JS under 200 KB gzip [A].
-- Testing: Vitest, Playwright, axe. pgTAP optional for SQL.
-- Environment variable names: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (browser); `SUPABASE_SERVICE_ROLE_KEY` (server only, background jobs only); `CAPTCHA_SECRET`, `NEXT_PUBLIC_CAPTCHA_SITE_KEY`; `CRON_SECRET`; Phase 2: `SMS_API_KEY`, `SMS_WEBHOOK_SECRET`; Phase 3: `DEVICE_KEY_PEPPER`.
+| Report grouping | 200 m, 3 h |
+| Contact retention | 30 days |
 
 ## Repo layout
 
 ```
 owta/
-  AGENTS.md
+  AGENTS.md, CLAUDE.md
   package.json, tsconfig.json, next.config.ts, components.json, middleware.ts
   .env.example            variable names only
-  docs/                   CONTEXT.md, DATA_MODEL.md, METHODOLOGY.md, SPEC.md, LATER.md, PRIVACY.md, RUNBOOK.md, tickets/
+  docs/                   CONTEXT.md, DATA_MODEL.md, METHODOLOGY.md, ENGINEERING.md, SPEC.md, LATER.md, PRIVACY.md, RUNBOOK.md, tickets/
   supabase/
-    migrations/           numbered SQL, 0001_extensions.sql onward
-    seed.sql              fictional, labeled sample data
+    migrations/           numbered SQL, 0001_extensions.sql to 0009_views_and_rls.sql
+    seed.sql              sample seed data
     tests/                RLS and view tests
-  public/geo/             simplified barangay and DMA GeoJSON
-  src/
-    app/
-      (public)/           landing, b/[barangayId], map, report, methodology, advisories
-      (auth)/login/
-      staff/              reports, relief, schedules, readings, advisories, index, admin/{users,methodology,audit}
-      api/                public, reports, readings, subscriptions, webhooks/sms, cron, health
-    components/           ui/ (shadcn), map/, charts/, status/, forms/
-    lib/                  supabase/{client,server,middleware,types}.ts, permissions.ts, validators.ts,
-                          rateLimit.ts, captcha.ts, logger.ts, sms/, geo.ts, time.ts, index-method.ts
-    i18n/                 en.json, fil.json, hil.json
-    tests/                unit/, e2e/
+  public/                 static assets, logos
+  app/                    Next.js App Router (page.tsx, index/, methodology/, report/, login/, staff/, api/)
+  components/             status/, forms/, staff/, ui/
+  lib/                    core business logic and shared utilities
+  utils/                  supabase/{client,server,middleware}.ts
 ```
