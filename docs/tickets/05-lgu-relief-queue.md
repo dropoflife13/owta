@@ -27,8 +27,8 @@ Proves evidence-based municipal resource allocation: relief tankers are dispatch
 3. Complete a test dispatch and verify the record is logged in `tanker_dispatches`.
 
 ## Done looks like
-- [ ] `/staff/relief` renders barangays filtered to dry duration $\ge 48$ hours.
-- [ ] List is strictly sorted by dry hours descending (`WR06`).
-- [ ] Dispatching transitions status cleanly through `requested` -> `dispatched` -> `delivered` (`WR11`).
-- [ ] Access is restricted to `lgu_dispatcher` and `admin` roles.
+- [x] `/staff/relief` renders barangays filtered to dry duration $\ge 48$ hours.
+- [x] List is strictly sorted by dry hours descending (`WR06`).
+- [x] Dispatching transitions status cleanly through `requested` -> `dispatched` -> `delivered` (`WR11`).
+- [x] Access is restricted to `lgu_dispatcher` and `admin` roles.
 
